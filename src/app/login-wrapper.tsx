@@ -65,37 +65,38 @@ export default function LoginPageWrapper() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: 'var(--background)' }}>
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-cover bg-center" 
+         style={{ backgroundImage: 'linear-gradient(to bottom, rgba(22, 163, 74, 0.4), rgba(0, 0, 0, 0.7)), url("/assets/images/login-bg.jpg")' }}>
+      <div className="w-full max-w-md relative z-10">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="mb-4 flex justify-center">
-            <img src="/assets/images/Logo_SUKMA_1_-1778584431642.png" alt="SUKMA Logo" className="h-16" />
+            <img src="/assets/images/Logo_SUKMA_1_-1778584431642.png" alt="SUKMA Logo" className="h-20 drop-shadow-lg" />
           </div>
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>
+          <h1 className="text-4xl font-black text-white drop-shadow-md">
             SUKMA
           </h1>
-          <p className="text-sm mt-2" style={{ color: 'var(--muted-foreground)' }}>
+          <p className="text-base mt-2 font-medium text-white/90 drop-shadow-sm">
             Sistem Manajemen Sekolah MI Islamiyah Malang
           </p>
         </div>
 
         {/* Login Card */}
-        <div className="card-elevated rounded-lg p-6 mb-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="bg-white/95 backdrop-blur-md rounded-2xl p-8 shadow-2xl">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {/* Error Message */}
             {error && (
-              <div className="flex gap-2 p-3 rounded-lg" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)' }}>
-                <AlertCircle size={16} style={{ color: '#ef4444', marginTop: '2px', flexShrink: 0 }} />
-                <p className="text-sm" style={{ color: '#ef4444' }}>
+              <div className="flex gap-2 p-3 rounded-xl bg-red-50 border border-red-100">
+                <AlertCircle size={18} className="text-red-500 mt-0.5 flex-shrink-0" />
+                <p className="text-sm text-red-600 font-medium">
                   {error}
                 </p>
               </div>
             )}
 
             {/* Username Input */}
-            <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--foreground)' }}>
+            <div className="space-y-2">
+              <label className="block text-sm font-bold text-slate-700">
                 Username
               </label>
               <input
@@ -104,19 +105,14 @@ export default function LoginPageWrapper() {
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Masukkan username"
                 disabled={isLoading}
-                className="w-full px-4 py-2 rounded-lg border outline-none transition-colors"
-                style={{
-                  borderColor: 'var(--border)',
-                  backgroundColor: 'var(--background)',
-                  color: 'var(--foreground)',
-                }}
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all"
                 required
               />
             </div>
 
             {/* Password Input */}
-            <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--foreground)' }}>
+            <div className="space-y-2">
+              <label className="block text-sm font-bold text-slate-700">
                 Password
               </label>
               <input
@@ -125,12 +121,7 @@ export default function LoginPageWrapper() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Masukkan password"
                 disabled={isLoading}
-                className="w-full px-4 py-2 rounded-lg border outline-none transition-colors"
-                style={{
-                  borderColor: 'var(--border)',
-                  backgroundColor: 'var(--background)',
-                  color: 'var(--foreground)',
-                }}
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all"
                 required
               />
             </div>
@@ -139,73 +130,19 @@ export default function LoginPageWrapper() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-2 px-4 rounded-lg font-medium transition-opacity"
-              style={{
-                backgroundColor: 'var(--primary)',
-                color: 'var(--primary-foreground)',
-                opacity: isLoading ? 0.7 : 1,
-              }}
+              className="w-full py-3.5 px-4 rounded-xl font-bold text-white bg-primary hover:bg-primary-dark shadow-lg shadow-primary/20 transition-all active:scale-[0.98] disabled:opacity-70"
             >
-              {isLoading ? 'Sedang login...' : 'Masuk'}
+              {isLoading ? 'Sedang login...' : 'Masuk ke Sistem'}
             </button>
           </form>
         </div>
 
-        {/* Demo Logins */}
-        <div>
-          <p className="text-xs text-center mb-3" style={{ color: 'var(--muted-foreground)' }}>
-            Akun Demo:
-          </p>
-          <div className="grid grid-cols-3 gap-2">
-            <button
-              onClick={() => handleDemoLogin('admin')}
-              disabled={isLoading}
-              className="py-2 px-3 rounded-lg text-xs font-medium transition-colors border"
-              style={{
-                borderColor: 'var(--border)',
-                backgroundColor: 'var(--card)',
-                color: 'var(--foreground)',
-              }}
-            >
-              Admin
-            </button>
-            <button
-              onClick={() => handleDemoLogin('guru')}
-              disabled={isLoading}
-              className="py-2 px-3 rounded-lg text-xs font-medium transition-colors border"
-              style={{
-                borderColor: 'var(--border)',
-                backgroundColor: 'var(--card)',
-                color: 'var(--foreground)',
-              }}
-            >
-              Guru
-            </button>
-            <button
-              onClick={() => handleDemoLogin('murid')}
-              disabled={isLoading}
-              className="py-2 px-3 rounded-lg text-xs font-medium transition-colors border"
-              style={{
-                borderColor: 'var(--border)',
-                backgroundColor: 'var(--card)',
-                color: 'var(--foreground)',
-              }}
-            >
-              Murid
-            </button>
-          </div>
-        </div>
-
-        {/* Credentials Info */}
-        <div className="mt-6 p-4 rounded-lg" style={{ backgroundColor: 'rgba(22, 163, 74, 0.1)' }}>
-          <p className="text-xs font-medium mb-2" style={{ color: 'var(--foreground)' }}>
-            📋 Akun Demo Tersedia:
-          </p>
-          <ul className="text-xs space-y-1" style={{ color: 'var(--muted-foreground)' }}>
-            <li>• Admin: <span style={{ color: '#16a34a' }}>admin</span> / admin123</li>
-            <li>• Guru: <span style={{ color: '#16a34a' }}>guru</span> / guru123</li>
-            <li>• Murid: <span style={{ color: '#16a34a' }}>murid</span> / murid123</li>
-          </ul>
+        {/* Footer */}
+        <div className="mt-12 text-center space-y-2">
+           <p className="text-white text-sm font-bold tracking-wide drop-shadow-md">
+             Lembaga Pendidikan Islam Kebonsari - MALANG
+           </p>
+           <div className="w-12 h-1 bg-white/30 mx-auto rounded-full"></div>
         </div>
       </div>
     </div>
