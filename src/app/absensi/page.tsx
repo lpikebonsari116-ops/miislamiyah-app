@@ -2,7 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
-import { ClipboardList, Plus, Search, CheckCircle, Save } from 'lucide-react';
+import { ClipboardList, Plus, Search, CheckCircle, Save, Loader2 } from 'lucide-react';
+import { supabase } from '@/utils/supabase';
+import { toast } from 'sonner';
 
 type StatusAbsensi = 'Hadir' | 'Sakit' | 'Izin' | 'Alpha' | '';
 
@@ -25,34 +27,6 @@ interface AbsensiSession {
 const KELAS_OPTIONS = ['1A', '1B', '2A', '2B', '3A', '3B', '4A', '4B', '5A', '5B', '6A', '6B'];
 const MAPEL_OPTIONS = ['Al-Quran Hadits', 'Matematika', 'Bahasa Indonesia', 'IPA', 'IPS', 'Bahasa Inggris', 'Penjaskes', 'Tahfidz', 'Fiqih', 'Aqidah Akhlak'];
 
-const SISWA_PER_KELAS: Record<string, { id: string; nama: string }[]> = {
-  '4A': [
-    { id: 's4a-01', nama: 'Muhammad Hafidz Al-Farisi' },
-    { id: 's4a-02', nama: 'Ilham Ramadhan Saputra' },
-    { id: 's4a-03', nama: 'Bagas Wicaksono Hadi' },
-    { id: 's4a-04', nama: 'Nadia Putri Santoso' },
-    { id: 's4a-05', nama: 'Omar Faruq Habibie' },
-    { id: 's4a-06', nama: 'Putri Rahmawati' },
-    { id: 's4a-07', nama: 'Qodir Maulana' },
-    { id: 's4a-08', nama: 'Rina Fitriani' },
-  ],
-  '5A': [
-    { id: 's5a-01', nama: 'Putri Ayu Lestari' },
-    { id: 's5a-02', nama: 'Qori Amalia Dewi' },
-    { id: 's5a-03', nama: 'Rafi Ahmad Santoso' },
-    { id: 's5a-04', nama: 'Salma Nur Izzati' },
-    { id: 's5a-05', nama: 'Taufik Hidayat' },
-    { id: 's5a-06', nama: 'Ulfa Rahmadani' },
-  ],
-  '6A': [
-    { id: 's6a-01', nama: 'Zahra Putri Andini' },
-    { id: 's6a-02', nama: 'Reza Pratama Wijaya' },
-    { id: 's6a-03', nama: 'Umar Fadhil Rahman' },
-    { id: 's6a-04', nama: 'Vina Amelia Putri' },
-    { id: 's6a-05', nama: 'Wahyu Setiawan' },
-  ],
-};
-
 const STATUS_CONFIG: Record<StatusAbsensi, { label: string; bg: string; color: string; short: string }> = {
   'Hadir': { label: 'Hadir', bg: '#dcfce7', color: '#166534', short: 'H' },
   'Sakit': { label: 'Sakit', bg: '#dbeafe', color: '#1e40af', short: 'S' },
@@ -61,38 +35,94 @@ const STATUS_CONFIG: Record<StatusAbsensi, { label: string; bg: string; color: s
   '': { label: 'Belum', bg: '#f1f5f9', color: '#64748b', short: '-' },
 };
 
-const mockSessions: AbsensiSession[] = [
-  {
-    id: 'abs001', kelas: '4A', tanggal: '2025-05-10', mataPelajaran: 'Matematika', guru: 'Ibu Sari Dewi, S.Pd',
-    records: [
-      { siswaId: 's4a-01', nama: 'Muhammad Hafidz Al-Farisi', status: 'Hadir', keterangan: '' },
-      { siswaId: 's4a-02', nama: 'Ilham Ramadhan Saputra', status: 'Hadir', keterangan: '' },
-      { siswaId: 's4a-03', nama: 'Bagas Wicaksono Hadi', status: 'Sakit', keterangan: 'Demam' },
-      { siswaId: 's4a-04', nama: 'Nadia Putri Santoso', status: 'Hadir', keterangan: '' },
-      { siswaId: 's4a-05', nama: 'Omar Faruq Habibie', status: 'Izin', keterangan: 'Acara keluarga' },
-      { siswaId: 's4a-06', nama: 'Putri Rahmawati', status: 'Hadir', keterangan: '' },
-      { siswaId: 's4a-07', nama: 'Qodir Maulana', status: 'Hadir', keterangan: '' },
-      { siswaId: 's4a-08', nama: 'Rina Fitriani', status: 'Alpha', keterangan: '' },
-    ],
-  },
-];
-
 export default function AbsensiPage() {
-  const [sessions, setSessions] = useState<AbsensiSession[]>(mockSessions);
+  const [sessions, setSessions] = useState<AbsensiSession[]>([]);
   const [activeTab, setActiveTab] = useState<'input' | 'riwayat'>('input');
   const [selectedKelas, setSelectedKelas] = useState('4A');
   const [selectedTanggal, setSelectedTanggal] = useState(new Date().toISOString().split('T')[0]);
   const [selectedMapel, setSelectedMapel] = useState('Matematika');
   const [records, setRecords] = useState<AbsensiRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [searchRiwayat, setSearchRiwayat] = useState('');
 
-  function initRecords(kelas: string) {
-    const siswaList = SISWA_PER_KELAS[kelas] || [];
-    setRecords(siswaList.map(s => ({ siswaId: s.id, nama: s.nama, status: 'Hadir' as StatusAbsensi, keterangan: '' })));
-  }
+  // Fetch history
+  useEffect(() => {
+    fetchHistory();
+  }, []);
 
-  React.useEffect(() => { initRecords(selectedKelas); }, [selectedKelas]);
+  const fetchHistory = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('attendance_sessions')
+        .select(`
+          *,
+          attendance_records (
+            status,
+            keterangan,
+            student_id,
+            students (nama)
+          )
+        `)
+        .order('tanggal', { ascending: false });
+
+      if (error) throw error;
+
+      if (data) {
+        const mappedSessions: AbsensiSession[] = data.map((s: any) => ({
+          id: s.id,
+          kelas: s.kelas,
+          tanggal: s.tanggal,
+          mataPelajaran: s.mata_pelajaran,
+          guru: s.guru,
+          records: s.attendance_records.map((r: any) => ({
+            siswaId: r.student_id,
+            nama: r.students?.nama || 'N/A',
+            status: r.status,
+            keterangan: r.keterangan || '',
+          })),
+        }));
+        setSessions(mappedSessions);
+      }
+    } catch (error: any) {
+      console.error('Error fetching history:', error.message);
+    }
+  };
+
+  const fetchStudentsByClass = async (kelas: string) => {
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('students')
+        .select('id, nama')
+        .eq('kelas', kelas)
+        .eq('status', 'Aktif')
+        .order('nama', { ascending: true });
+
+      if (error) throw error;
+
+      if (data) {
+        setRecords(data.map(s => ({
+          siswaId: s.id,
+          nama: s.nama,
+          status: 'Hadir' as StatusAbsensi,
+          keterangan: '',
+        })));
+      }
+    } catch (error: any) {
+      console.error('Error fetching students:', error.message);
+      toast.error('Gagal mengambil data siswa');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'input') {
+      fetchStudentsByClass(selectedKelas);
+    }
+  }, [selectedKelas, activeTab]);
 
   function setStatus(siswaId: string, status: StatusAbsensi) {
     setRecords(prev => prev.map(r => r.siswaId === siswaId ? { ...r, status } : r));
@@ -103,19 +133,48 @@ export default function AbsensiPage() {
     setRecords(prev => prev.map(r => r.siswaId === siswaId ? { ...r, keterangan } : r));
   }
 
-  function handleSave() {
-    const newSession: AbsensiSession = {
-      id: `abs${Date.now()}`,
-      kelas: selectedKelas,
-      tanggal: selectedTanggal,
-      mataPelajaran: selectedMapel,
-      guru: 'Ahmad Fauzi, S.Pd',
-      records: [...records],
-    };
-    setSessions(prev => [newSession, ...prev]);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  }
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+      // 1. Create Session
+      const { data: sessionData, error: sessionError } = await supabase
+        .from('attendance_sessions')
+        .insert([{
+          kelas: selectedKelas,
+          tanggal: selectedTanggal,
+          mata_pelajaran: selectedMapel,
+          guru: 'Ahmad Fauzi, S.Pd', // In production, get from auth context
+        }])
+        .select()
+        .single();
+
+      if (sessionError) throw sessionError;
+
+      // 2. Create Records
+      const recordPayload = records.map(r => ({
+        session_id: sessionData.id,
+        student_id: r.siswaId,
+        status: r.status,
+        keterangan: r.keterangan,
+      }));
+
+      const { error: recordsError } = await supabase
+        .from('attendance_records')
+        .insert(recordPayload);
+
+      if (recordsError) throw recordsError;
+
+      setSaved(true);
+      toast.success('Absensi berhasil disimpan');
+      fetchHistory();
+      setTimeout(() => setSaved(false), 2000);
+    } catch (error: any) {
+      console.error('Error saving attendance:', error.message);
+      toast.error('Gagal menyimpan absensi');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   function markAll(status: StatusAbsensi) {
     setRecords(prev => prev.map(r => ({ ...r, status })));

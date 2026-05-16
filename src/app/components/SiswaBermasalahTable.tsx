@@ -1,14 +1,13 @@
+'use client';
+
 import React from 'react';
 import { AlertTriangle, ArrowRight } from 'lucide-react';
 
 const siswaBermasalah = [
-  { id: 'siswa-b01', nama: 'Farhan Ardiansyah', kelas: '5B', poin: 52, pelanggaran: 'Membuat kegaduhan di aula', lastDate: '10 Mei 2026' },
-  { id: 'siswa-b02', nama: 'Rizki Maulana', kelas: '3B', poin: 58, pelanggaran: 'Terlambat 3x berturut-turut', lastDate: '11 Mei 2026' },
-  { id: 'siswa-b03', nama: 'Siti Aisyah Putri', kelas: '2B', poin: 55, pelanggaran: 'Tidak mengerjakan PR', lastDate: '09 Mei 2026' },
-  { id: 'siswa-b04', nama: 'Bagas Wicaksono', kelas: '4A', poin: 47, pelanggaran: 'Berlari di koridor', lastDate: '12 Mei 2026' },
-  { id: 'siswa-b05', nama: 'Dinda Rahmawati', kelas: '6B', poin: 61, pelanggaran: 'Berbicara kasar kepada teman', lastDate: '08 Mei 2026' },
-  { id: 'siswa-b06', nama: 'Ahmad Zulfikar', kelas: '1B', poin: 59, pelanggaran: 'Membuang sampah sembarangan', lastDate: '11 Mei 2026' },
-  { id: 'siswa-b07', nama: 'Nisa Fauziah', kelas: '3A', poin: 63, pelanggaran: 'Tidak mengikuti murojaah', lastDate: '10 Mei 2026' },
+  { id: 'siswa-b01', nama: 'Farhan Ardiansyah', kelas: '5B', poin: 42, pelanggaran: 'Membuat kegaduhan saat sholat', tanggal: '10/05/2025' },
+  { id: 'siswa-b02', nama: 'Bagas Wicaksono', kelas: '4A', poin: 47, pelanggaran: 'Berlari di koridor koridor', tanggal: '10/05/2025' },
+  { id: 'siswa-b03', nama: 'Rizki Maulana', kelas: '3B', poin: 58, pelanggaran: 'Tidak mengerjakan PR', tanggal: '09/05/2025' },
+  { id: 'siswa-b04', nama: 'Omar Faruq Habibie', kelas: '4A', poin: 62, pelanggaran: 'Terlambat masuk sekolah', tanggal: '09/05/2025' },
 ];
 
 function getPoinColor(poin: number) {
@@ -33,7 +32,7 @@ export default function SiswaBermasalahTable() {
         <div className="flex items-center gap-2">
           <AlertTriangle size={16} style={{ color: 'var(--danger)' }} />
           <h2 className="text-sm font-semibold">Siswa Perlu Perhatian</h2>
-          <span className="badge-warning">7 siswa</span>
+          <span className="badge-warning">4 siswa</span>
         </div>
         <button
           className="text-xs font-semibold flex items-center gap-1 hover:underline"
@@ -46,7 +45,7 @@ export default function SiswaBermasalahTable() {
         <table className="w-full text-sm">
           <thead>
             <tr style={{ backgroundColor: 'var(--muted)' }}>
-              <th className="text-left px-5 py-2.5 text-xs font-600 text-muted-foreground font-semibold">Nama Siswa</th>
+              <th className="text-left px-5 py-2.5 text-xs font-semibold text-muted-foreground">Nama Siswa</th>
               <th className="text-left px-3 py-2.5 text-xs font-semibold text-muted-foreground">Kelas</th>
               <th className="text-left px-3 py-2.5 text-xs font-semibold text-muted-foreground">Poin</th>
               <th className="text-left px-3 py-2.5 text-xs font-semibold text-muted-foreground">Pelanggaran Terakhir</th>
@@ -73,7 +72,7 @@ export default function SiswaBermasalahTable() {
                   </span>
                 </td>
                 <td className="px-3 py-3 text-xs text-muted-foreground max-w-[160px] truncate">{s.pelanggaran}</td>
-                <td className="px-3 py-3 text-xs text-muted-foreground">{s.lastDate}</td>
+                <td className="px-3 py-3 text-xs text-muted-foreground">{s.tanggal}</td>
               </tr>
             ))}
           </tbody>

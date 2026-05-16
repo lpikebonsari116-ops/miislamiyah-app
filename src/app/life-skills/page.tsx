@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
-import { BookOpen, Save, CheckCircle } from 'lucide-react';
+import { BookOpen, Save, CheckCircle, Loader2 } from 'lucide-react';
+import { supabase } from '@/utils/supabase';
+import { toast } from 'sonner';
 
 type LifeSkillValue = 'B' | 'C' | 'K' | '';
 
@@ -18,70 +20,23 @@ interface DailyRecord {
   };
 }
 
-const mockSiswaPerKelas: Record<string, StudentRow[]> = {
-  '1A': [
-    { id: 's1a-01', nama: 'Aisyah Nur Fadilah', kelas: '1A' },
-    { id: 's1a-02', nama: 'Bintang Ramadhan', kelas: '1A' },
-    { id: 's1a-03', nama: 'Cahya Putri Utami', kelas: '1A' },
-    { id: 's1a-04', nama: 'Daffa Arya Pratama', kelas: '1A' },
-    { id: 's1a-05', nama: 'Elsa Maulida Sari', kelas: '1A' },
-  ],
-  '1B': [
-    { id: 's1b-01', nama: 'Ahmad Zulfikar Hakim', kelas: '1B' },
-    { id: 's1b-02', nama: 'Bunga Citra Lestari', kelas: '1B' },
-    { id: 's1b-03', nama: 'Candra Wibisono', kelas: '1B' },
-    { id: 's1b-04', nama: 'Dina Fitriani', kelas: '1B' },
-    { id: 's1b-05', nama: 'Eko Prasetyo', kelas: '1B' },
-  ],
-  '2A': [
-    { id: 's2a-01', nama: 'Farid Hidayatullah', kelas: '2A' },
-    { id: 's2a-02', nama: 'Gita Permata Sari', kelas: '2A' },
-    { id: 's2a-03', nama: 'Hendra Kusuma', kelas: '2A' },
-    { id: 's2a-04', nama: 'Indah Rahayu', kelas: '2A' },
-    { id: 's2a-05', nama: 'Joko Susanto', kelas: '2A' },
-  ],
-  '3A': [
-    { id: 's3a-01', nama: 'Aulia Rahmadani Putri', kelas: '3A' },
-    { id: 's3a-02', nama: 'Nisa Fauziah Ramadhani', kelas: '3A' },
-    { id: 's3a-03', nama: 'Kevin Ardianto', kelas: '3A' },
-    { id: 's3a-04', nama: 'Laila Nur Azizah', kelas: '3A' },
-    { id: 's3a-05', nama: 'Maulana Yusuf', kelas: '3A' },
-  ],
-  '4A': [
-    { id: 's4a-01', nama: 'Muhammad Hafidz Al-Farisi', kelas: '4A' },
-    { id: 's4a-02', nama: 'Ilham Ramadhan Saputra', kelas: '4A' },
-    { id: 's4a-03', nama: 'Bagas Wicaksono Hadi', kelas: '4A' },
-    { id: 's4a-04', nama: 'Nadia Putri Santoso', kelas: '4A' },
-    { id: 's4a-05', nama: 'Omar Faruq Habibie', kelas: '4A' },
-  ],
-  '5A': [
-    { id: 's5a-01', nama: 'Putri Ayu Lestari', kelas: '5A' },
-    { id: 's5a-02', nama: 'Qori Amalia Dewi', kelas: '5A' },
-    { id: 's5a-03', nama: 'Rafi Ahmad Santoso', kelas: '5A' },
-    { id: 's5a-04', nama: 'Salma Nur Izzati', kelas: '5A' },
-    { id: 's5a-05', nama: 'Taufik Hidayat', kelas: '5A' },
-  ],
-  '6A': [
-    { id: 's6a-01', nama: 'Zahra Putri Andini', kelas: '6A' },
-    { id: 's6a-02', nama: 'Reza Pratama Wijaya', kelas: '6A' },
-    { id: 's6a-03', nama: 'Umar Fadhil Rahman', kelas: '6A' },
-    { id: 's6a-04', nama: 'Vina Amelia Putri', kelas: '6A' },
-    { id: 's6a-05', nama: 'Wahyu Setiawan', kelas: '6A' },
-  ],
-};
-
-const kelasOptions = Object.keys(mockSiswaPerKelas);
+const KELAS_OPTIONS = ['1A', '1B', '2A', '2B', '3A', '3B', '4A', '4B', '5A', '5B', '6A', '6B'];
 const bulanOptions = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
 const tahunOptions = ['2024', '2025', '2026'];
 
 const DAYS_OF_WEEK = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
 
-function getDaysInMonth(month: number, year: number): { day: number; dayOfWeek: string }[] {
+function getDaysInMonth(month: number, year: number): { day: number; dayOfWeek: string; dateStr: string }[] {
   const days = [];
   const daysInMonth = new Date(year, month, 0).getDate();
   for (let d = 1; d <= daysInMonth; d++) {
     const date = new Date(year, month - 1, d);
-    days.push({ day: d, dayOfWeek: DAYS_OF_WEEK[date.getDay() === 0 ? 6 : date.getDay() - 1] });
+    const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    days.push({ 
+      day: d, 
+      dayOfWeek: DAYS_OF_WEEK[date.getDay() === 0 ? 6 : date.getDay() - 1],
+      dateStr
+    });
   }
   return days;
 }
@@ -101,19 +56,69 @@ function cycleValue(current: LifeSkillValue): LifeSkillValue {
 
 export default function LifeSkillsPage() {
   const [selectedKelas, setSelectedKelas] = useState('4A');
-  const [selectedBulan, setSelectedBulan] = useState(4);
-  const [selectedTahun, setSelectedTahun] = useState(2025);
+  const [selectedBulan, setSelectedBulan] = useState(new Date().getMonth() + 1);
+  const [selectedTahun, setSelectedTahun] = useState(new Date().getFullYear());
+  const [siswaList, setSiswaList] = useState<StudentRow[]>([]);
   const [records, setRecords] = useState<DailyRecord>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const siswaList = mockSiswaPerKelas[selectedKelas] || [];
-  const days = getDaysInMonth(selectedBulan, selectedTahun);
+  const days = useMemo(() => getDaysInMonth(selectedBulan, selectedTahun), [selectedBulan, selectedTahun]);
 
-  // Weeks: split days into groups of 7
-  const weeks: typeof days[] = [];
-  for (let i = 0; i < days.length; i += 7) {
-    weeks.push(days.slice(i, i + 7));
-  }
+  useEffect(() => {
+    fetchData();
+  }, [selectedKelas, selectedBulan, selectedTahun]);
+
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
+      // 1. Fetch Students
+      const { data: studentsData } = await supabase
+        .from('students')
+        .select('id, nama, kelas')
+        .eq('kelas', selectedKelas)
+        .eq('status', 'Aktif')
+        .order('nama', { ascending: true });
+
+      if (studentsData) setSiswaList(studentsData);
+
+      // 2. Fetch Records for the month
+      const startDate = `${selectedTahun}-${String(selectedBulan).padStart(2, '0')}-01`;
+      const endDate = `${selectedTahun}-${String(selectedBulan).padStart(2, '0')}-${days.length}`;
+      
+      const { data: recordsData } = await supabase
+        .from('life_skills_records')
+        .select('*')
+        .in('student_id', studentsData?.map(s => s.id) || [])
+        .gte('tanggal', startDate)
+        .lte('tanggal', endDate);
+
+      if (recordsData) {
+        const mapped: DailyRecord = {};
+        recordsData.forEach((r: any) => {
+          const day = new Date(r.tanggal).getDate();
+          if (!mapped[r.student_id]) mapped[r.student_id] = {};
+          mapped[r.student_id][`${day}`] = r.value as LifeSkillValue;
+        });
+        setRecords(mapped);
+      } else {
+        setRecords({});
+      }
+    } catch (error: any) {
+      console.error('Error fetching data:', error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const weeks: typeof days[] = useMemo(() => {
+    const w: typeof days[] = [];
+    for (let i = 0; i < days.length; i += 7) {
+      w.push(days.slice(i, i + 7));
+    }
+    return w;
+  }, [days]);
 
   function getRecord(studentId: string, day: number): LifeSkillValue {
     return records[studentId]?.[`${day}`] ?? '';
@@ -129,9 +134,39 @@ export default function LifeSkillsPage() {
     setSaved(false);
   }
 
-  function handleSave() {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  async function handleSave() {
+    try {
+      setIsSaving(true);
+      
+      const payload: any[] = [];
+      Object.entries(records).forEach(([studentId, daysObj]) => {
+        Object.entries(daysObj).forEach(([day, value]) => {
+          if (value) {
+            payload.push({
+              student_id: studentId,
+              tanggal: `${selectedTahun}-${String(selectedBulan).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+              value
+            });
+          }
+        });
+      });
+
+      // Simple upsert (Supabase handles UNIQUE constraint if configured)
+      const { error } = await supabase
+        .from('life_skills_records')
+        .upsert(payload, { onConflict: 'student_id, tanggal' });
+
+      if (error) throw error;
+
+      setSaved(true);
+      toast.success('Laporan berhasil disimpan');
+      setTimeout(() => setSaved(false), 2000);
+    } catch (error: any) {
+      console.error('Error saving records:', error.message);
+      toast.error('Gagal menyimpan laporan');
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   function countValue(studentId: string, val: LifeSkillValue) {
@@ -149,8 +184,8 @@ export default function LifeSkillsPage() {
               Rekam perkembangan life skills siswa setiap hari — klik sel untuk mengisi nilai
             </p>
           </div>
-          <button className="btn-primary" onClick={handleSave}>
-            {saved ? <><CheckCircle size={16} /> Tersimpan!</> : <><Save size={16} /> Simpan Laporan</>}
+          <button className="btn-primary" onClick={handleSave} disabled={isSaving}>
+            {isSaving ? <Loader2 size={16} className="animate-spin" /> : saved ? <><CheckCircle size={16} /> Tersimpan!</> : <><Save size={16} /> Simpan Laporan</>}
           </button>
         </div>
 
@@ -160,7 +195,7 @@ export default function LifeSkillsPage() {
             <label className="block text-xs font-medium mb-1" style={{ color: 'var(--muted-foreground)' }}>Kelas</label>
             <select value={selectedKelas} onChange={e => setSelectedKelas(e.target.value)}
               className="px-3 py-2 rounded-lg border text-sm" style={{ borderColor: 'var(--border)', backgroundColor: 'var(--input)' }}>
-              {kelasOptions.map(k => <option key={k} value={k}>Kelas {k}</option>)}
+              {KELAS_OPTIONS.map(k => <option key={k} value={k}>Kelas {k}</option>)}
             </select>
           </div>
           <div>

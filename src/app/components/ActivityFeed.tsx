@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { Star, MinusCircle, Clock } from 'lucide-react';
 
@@ -8,7 +10,7 @@ const activities = [
     guru: 'Ibu Sari Dewi',
     siswa: 'Muhammad Hafidz',
     kelas: '4A',
-    aksi: 'Rajin berdoa dan beribadah',
+    aksi: 'Rajin sholat dan beribadah',
     poin: '+5',
     time: '10 menit lalu',
   },
@@ -66,7 +68,7 @@ const activities = [
 
 export default function ActivityFeed() {
   return (
-    <div className="card-elevated rounded-xl overflow-hidden">
+    <div className="card-elevated rounded-xl overflow-hidden h-full">
       <div
         className="flex items-center justify-between px-5 py-4"
         style={{ borderBottom: '1px solid var(--border)' }}
@@ -78,18 +80,18 @@ export default function ActivityFeed() {
         <span className="text-xs text-muted-foreground">Hari ini</span>
       </div>
       <div className="divide-y" style={{ borderColor: 'var(--border)' }}>
-        {activities?.map((a) => (
+        {activities.map((a) => (
           <div
-            key={a?.id}
+            key={a.id}
             className="flex items-start gap-3 px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer"
           >
             <div
               className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
               style={{
-                backgroundColor: a?.type === 'kebaikan' ? 'var(--success-bg)' : 'var(--danger-bg)',
+                backgroundColor: a.type === 'kebaikan' ? 'var(--success-bg)' : 'var(--danger-bg)',
               }}
             >
-              {a?.type === 'kebaikan' ? (
+              {a.type === 'kebaikan' ? (
                 <Star size={13} style={{ color: 'var(--success)' }} />
               ) : (
                 <MinusCircle size={13} style={{ color: 'var(--danger)' }} />
@@ -97,17 +99,17 @@ export default function ActivityFeed() {
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-xs font-semibold truncate">{a?.siswa}</p>
+                <p className="text-xs font-semibold truncate">{a.siswa}</p>
                 <span
                   className="text-xs font-bold font-tabular flex-shrink-0"
-                  style={{ color: a?.type === 'kebaikan' ? 'var(--success)' : 'var(--danger)' }}
+                  style={{ color: a.type === 'kebaikan' ? 'var(--success)' : 'var(--danger)' }}
                 >
-                  {a?.poin}
+                  {a.poin}
                 </span>
               </div>
-              <p className="text-xs text-muted-foreground truncate">{a?.aksi}</p>
+              <p className="text-xs text-muted-foreground truncate">{a.aksi}</p>
               <p className="text-xs mt-0.5" style={{ color: 'var(--muted-foreground)', fontSize: '0.625rem' }}>
-                {a?.guru} · Kelas {a?.kelas} · {a?.time}
+                {a.guru} · Kelas {a.kelas} · {a.time}
               </p>
             </div>
           </div>
@@ -118,7 +120,7 @@ export default function ActivityFeed() {
           className="w-full text-xs font-semibold py-2 rounded-lg transition-colors hover:bg-muted"
           style={{ color: 'var(--primary)' }}
         >
-          Lihat semua aktivitas hari ini
+          Lihat semua aktivitas
         </button>
       </div>
     </div>

@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/AuthContext';
 import { toast } from 'sonner';
 import AppLayout from '@/components/AppLayout';
-import { Star, Plus, Search, Trash2, CheckCircle, XCircle, TrendingUp, TrendingDown, User, BookOpen, Award } from 'lucide-react';
+import { Star, Plus, Search, Trash2, CheckCircle, XCircle, TrendingUp, TrendingDown, User, BookOpen, Award, Loader2 } from 'lucide-react';
+import { supabase } from '@/utils/supabase';
 
 interface PoinEntry {
   id: string;
@@ -20,130 +21,20 @@ interface PoinEntry {
   dicatatOleh: string;
 }
 
-interface BehaviorItem {
-  perilaku: string;
-  poin: number;
-  jenis: 'positif' | 'negatif';
-}
-
 interface BehaviorCategory {
-  kategori: string;
-  items: BehaviorItem[];
+  id: string;
+  name: string;
+  points: number;
+  type: 'Kebaikan' | 'Keburukan';
 }
-
-const behaviorCategories: BehaviorCategory[] = [
-  {
-    kategori: 'Keimanan & Ibadah',
-    items: [
-      { perilaku: 'Terlambat masuk aula sholat Dhuha', poin: -20, jenis: 'negatif' },
-      { perilaku: 'Terlambat ke aula sholat Dhuhur', poin: -20, jenis: 'negatif' },
-      { perilaku: 'Tidak mengikuti dzikir dan doa pagi', poin: -20, jenis: 'negatif' },
-      { perilaku: 'Mengganggu teman saat sholat', poin: -20, jenis: 'negatif' },
-      { perilaku: 'Membuat keributan di aula/masjid', poin: -20, jenis: 'negatif' },
-      { perilaku: 'Tidak mengikuti murojaah dan hafalan', poin: -20, jenis: 'negatif' },
-      { perilaku: 'Membiasakan salam saat masuk/keluar kelas', poin: 5, jenis: 'positif' },
-      { perilaku: 'Bersyukur atas nikmat yang diterima', poin: 5, jenis: 'positif' },
-      { perilaku: 'Rajin sholat dan beribadah', poin: 5, jenis: 'positif' },
-      { perilaku: 'Berdoa sebelum makan dan minum', poin: 5, jenis: 'positif' },
-    ],
-  },
-  {
-    kategori: 'Kedisiplinan',
-    items: [
-      { perilaku: 'Terlambat masuk sekolah tanpa izin', poin: -10, jenis: 'negatif' },
-      { perilaku: 'Berseragam tidak sesuai ketentuan', poin: -10, jenis: 'negatif' },
-      { perilaku: 'Tidak mengikuti upacara bendera', poin: -10, jenis: 'negatif' },
-      { perilaku: 'Tidak membawa perlengkapan belajar lengkap', poin: -10, jenis: 'negatif' },
-      { perilaku: 'Tepat waktu datang ke sekolah', poin: 5, jenis: 'positif' },
-      { perilaku: 'Rajin belajar dan mengerjakan tugas', poin: 5, jenis: 'positif' },
-      { perilaku: 'Menjaga amanah yang diberikan guru', poin: 5, jenis: 'positif' },
-      { perilaku: 'Rajin menyelesaikan PR', poin: 5, jenis: 'positif' },
-      { perilaku: 'Mengikuti ekstrakurikuler sesuai jadwal', poin: 5, jenis: 'positif' },
-    ],
-  },
-  {
-    kategori: 'Kebersihan & Kerapian',
-    items: [
-      { perilaku: 'Membuang sampah sembarangan', poin: -10, jenis: 'negatif' },
-      { perilaku: 'Melepas sepatu/sandal sembarangan', poin: -10, jenis: 'negatif' },
-      { perilaku: 'Mencoret meja, kursi, atau dinding sekolah', poin: -10, jenis: 'negatif' },
-      { perilaku: 'Tidak merapikan buku dan peralatan', poin: -10, jenis: 'negatif' },
-      { perilaku: 'Membantu menjaga fasilitas sekolah', poin: 5, jenis: 'positif' },
-      { perilaku: 'Membuang sampah pada tempatnya', poin: 5, jenis: 'positif' },
-      { perilaku: 'Menjaga kebersihan diri dan lingkungan', poin: 5, jenis: 'positif' },
-    ],
-  },
-  {
-    kategori: 'Tata Krama & Sopan Santun',
-    items: [
-      { perilaku: 'Berbicara kasar kepada teman/guru', poin: -20, jenis: 'negatif' },
-      { perilaku: 'Mengejek atau memanggil teman dengan julukan buruk', poin: -30, jenis: 'negatif' },
-      { perilaku: 'Tidak mengucapkan salam atau terima kasih', poin: -20, jenis: 'negatif' },
-      { perilaku: 'Memotong pembicaraan orang lain dengan kasar', poin: -20, jenis: 'negatif' },
-      { perilaku: 'Berbicara kotor/jorok', poin: -20, jenis: 'negatif' },
-      { perilaku: 'Menghormati orang tua dan guru', poin: 5, jenis: 'positif' },
-      { perilaku: 'Berbicara sopan kepada semua orang', poin: 5, jenis: 'positif' },
-      { perilaku: 'Ramah kepada teman baru', poin: 5, jenis: 'positif' },
-      { perilaku: 'Sabar menghadapi masalah kecil', poin: 5, jenis: 'positif' },
-    ],
-  },
-  {
-    kategori: 'Keamanan & Ketertiban',
-    items: [
-      { perilaku: 'Berlari di koridor dengan berbahaya', poin: -30, jenis: 'negatif' },
-      { perilaku: 'Bermain kasar yang bisa melukai teman', poin: -10, jenis: 'negatif' },
-      { perilaku: 'Membawa barang terlarang (petasan, senjata mainan)', poin: -30, jenis: 'negatif' },
-      { perilaku: 'Mendorong, memukul, atau mem-bully teman', poin: -30, jenis: 'negatif' },
-      { perilaku: 'Tidak mengejek atau mem-bully teman', poin: 5, jenis: 'positif' },
-      { perilaku: 'Antri tertib di kantin atau toilet', poin: 5, jenis: 'positif' },
-      { perilaku: 'Menjaga ketenangan saat guru menjelaskan', poin: 5, jenis: 'positif' },
-      { perilaku: 'Ikut menjaga kebersihan kelas dan sekolah', poin: 5, jenis: 'positif' },
-    ],
-  },
-  {
-    kategori: 'Kejujuran & Tanggung Jawab',
-    items: [
-      { perilaku: 'Mencontek saat ujian', poin: -10, jenis: 'negatif' },
-      { perilaku: 'Mengambil barang teman tanpa izin', poin: -10, jenis: 'negatif' },
-      { perilaku: 'Tidak mengerjakan PR', poin: -10, jenis: 'negatif' },
-      { perilaku: 'Tidak mengakui kesalahan yang diperbuat', poin: -10, jenis: 'negatif' },
-      { perilaku: 'Adil dan tidak pilih kasih kepada teman', poin: 5, jenis: 'positif' },
-      { perilaku: 'Memaafkan teman yang berbuat salah', poin: 5, jenis: 'positif' },
-      { perilaku: 'Suka membantu teman yang membutuhkan', poin: 5, jenis: 'positif' },
-      { perilaku: 'Jujur dalam perkataan dan perbuatan', poin: 5, jenis: 'positif' },
-    ],
-  },
-];
-
-const mockPoinEntries: PoinEntry[] = [
-  { id: 'p001', siswaId: 'siswa-001', namaSiswa: 'Muhammad Hafidz Al-Farisi', kelas: '4A', tanggal: '2025-05-10', kategori: 'Keimanan & Ibadah', perilaku: 'Rajin sholat dan beribadah', jenis: 'positif', poin: 5, dicatatOleh: 'Ibu Sari Dewi' },
-  { id: 'p002', siswaId: 'siswa-002', namaSiswa: 'Aulia Rahmadani Putri', kelas: '3A', tanggal: '2025-05-10', kategori: 'Kedisiplinan', perilaku: 'Tepat waktu datang ke sekolah', jenis: 'positif', poin: 5, dicatatOleh: 'Ibu Nurul Hidayah' },
-  { id: 'p003', siswaId: 'siswa-003', namaSiswa: 'Farhan Ardiansyah', kelas: '5B', tanggal: '2025-05-09', kategori: 'Tata Krama & Sopan Santun', perilaku: 'Berbicara kasar kepada teman/guru', jenis: 'negatif', poin: -20, dicatatOleh: 'Pak Agus Wahyudi' },
-  { id: 'p004', siswaId: 'siswa-004', namaSiswa: 'Zahra Putri Andini', kelas: '6A', tanggal: '2025-05-09', kategori: 'Kejujuran & Tanggung Jawab', perilaku: 'Jujur dalam perkataan dan perbuatan', jenis: 'positif', poin: 5, dicatatOleh: 'Ibu Fatimah Zahra' },
-  { id: 'p005', siswaId: 'siswa-005', namaSiswa: 'Rizki Maulana Putra', kelas: '3B', tanggal: '2025-05-08', kategori: 'Keamanan & Ketertiban', perilaku: 'Berlari di koridor dengan berbahaya', jenis: 'negatif', poin: -30, dicatatOleh: 'Pak Rudi Hartono' },
-  { id: 'p006', siswaId: 'siswa-007', namaSiswa: 'Ilham Ramadhan Saputra', kelas: '4A', tanggal: '2025-05-08', kategori: 'Kebersihan & Kerapian', perilaku: 'Membuang sampah pada tempatnya', jenis: 'positif', poin: 5, dicatatOleh: 'Ibu Sari Dewi' },
-  { id: 'p007', siswaId: 'siswa-009', namaSiswa: 'Bagas Wicaksono Hadi', kelas: '4A', tanggal: '2025-05-07', kategori: 'Kedisiplinan', perilaku: 'Terlambat masuk sekolah tanpa izin', jenis: 'negatif', poin: -10, dicatatOleh: 'Ibu Sari Dewi' },
-  { id: 'p008', siswaId: 'siswa-012', namaSiswa: 'Putri Ayu Lestari', kelas: '5A', tanggal: '2025-05-07', kategori: 'Keimanan & Ibadah', perilaku: 'Membiasakan salam saat masuk/keluar kelas', jenis: 'positif', poin: 5, dicatatOleh: 'Ibu Rina Kusuma' },
-];
-
-const mockSiswa = [
-  { id: 'siswa-001', nama: 'Muhammad Hafidz Al-Farisi', kelas: '4A' },
-  { id: 'siswa-002', nama: 'Aulia Rahmadani Putri', kelas: '3A' },
-  { id: 'siswa-003', nama: 'Farhan Ardiansyah', kelas: '5B' },
-  { id: 'siswa-004', nama: 'Zahra Putri Andini', kelas: '6A' },
-  { id: 'siswa-005', nama: 'Rizki Maulana Putra', kelas: '3B' },
-  { id: 'siswa-006', nama: 'Siti Aisyah Nurhaliza', kelas: '2B' },
-  { id: 'siswa-007', nama: 'Ilham Ramadhan Saputra', kelas: '4A' },
-  { id: 'siswa-008', nama: 'Nisa Fauziah Ramadhani', kelas: '3A' },
-  { id: 'siswa-009', nama: 'Bagas Wicaksono Hadi', kelas: '4A' },
-  { id: 'siswa-010', nama: 'Dinda Rahmawati Sari', kelas: '6B' },
-  { id: 'siswa-011', nama: 'Ahmad Zulfikar Hakim', kelas: '1B' },
-  { id: 'siswa-012', nama: 'Putri Ayu Lestari', kelas: '5A' },
-  { id: 'siswa-013', nama: 'Farid Hidayatullah', kelas: '2A' },
-];
 
 export default function PoinPerilakuPage() {
-  const [entries, setEntries] = useState<PoinEntry[]>(mockPoinEntries);
+  const [entries, setEntries] = useState<PoinEntry[]>([]);
+  const [categories, setCategories] = useState<BehaviorCategory[]>([]);
+  const [students, setStudents] = useState<{id: string, nama: string, kelas: string}[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  
   const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState('');
   const [filterJenis, setFilterJenis] = useState('Semua');
@@ -151,50 +42,121 @@ export default function PoinPerilakuPage() {
 
   // Form state
   const [formSiswa, setFormSiswa] = useState('');
-  const [formKategori, setFormKategori] = useState('');
-  const [formPerilaku, setFormPerilaku] = useState('');
+  const [formCategoryId, setFormCategoryId] = useState('');
   const [formTanggal, setFormTanggal] = useState(new Date().toISOString().split('T')[0]);
+  const [formKeterangan, setFormKeterangan] = useState('');
 
-  const selectedCategory = behaviorCategories.find(c => c.kategori === formKategori);
-  const selectedBehavior = selectedCategory?.items.find(i => i.perilaku === formPerilaku);
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Fetch Categories
+      const { data: catData } = await supabase.from('behavior_categories').select('*');
+      if (catData) setCategories(catData);
+
+      // Fetch Students
+      const { data: stuData } = await supabase.from('students').select('id, nama, kelas').eq('status', 'Aktif');
+      if (stuData) setStudents(stuData);
+
+      // Fetch Logs
+      const { data: logsData } = await supabase
+        .from('behavior_logs')
+        .select(`
+          *,
+          students (nama, kelas),
+          behavior_categories (name, type)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (logsData) {
+        const mapped: PoinEntry[] = logsData.map((l: any) => ({
+          id: l.id,
+          siswaId: l.student_id,
+          namaSiswa: l.students?.nama || 'N/A',
+          kelas: l.students?.kelas || 'N/A',
+          tanggal: l.date,
+          kategori: l.behavior_categories?.type === 'Kebaikan' ? 'Positif' : 'Negatif',
+          perilaku: l.behavior_categories?.name || 'N/A',
+          jenis: l.behavior_categories?.type === 'Kebaikan' ? 'positif' : 'negatif',
+          poin: l.points,
+          dicatatOleh: 'Guru', // Static for now
+        }));
+        setEntries(mapped);
+      }
+    } catch (error: any) {
+      console.error('Error fetching data:', error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const selectedCategory = categories.find(c => c.id === formCategoryId);
 
   const filtered = useMemo(() => {
     return entries.filter(e => {
       const matchSearch = e.namaSiswa.toLowerCase().includes(search.toLowerCase()) ||
         e.perilaku.toLowerCase().includes(search.toLowerCase());
       const matchJenis = filterJenis === 'Semua' || e.jenis === filterJenis;
-      const matchKategori = filterKategori === 'Semua' || e.kategori === filterKategori;
-      return matchSearch && matchJenis && matchKategori;
+      // Kategori filter might need adjustments if we want to filter by category name
+      return matchSearch && matchJenis;
     });
-  }, [entries, search, filterJenis, filterKategori]);
+  }, [entries, search, filterJenis]);
 
   const totalPositif = entries.filter(e => e.jenis === 'positif').reduce((s, e) => s + e.poin, 0);
   const totalNegatif = entries.filter(e => e.jenis === 'negatif').reduce((s, e) => s + e.poin, 0);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!formSiswa || !formKategori || !formPerilaku) return;
-    const siswa = mockSiswa.find(s => s.id === formSiswa);
-    if (!siswa || !selectedBehavior) return;
-    const newEntry: PoinEntry = {
-      id: `p${Date.now()}`,
-      siswaId: formSiswa,
-      namaSiswa: siswa.nama,
-      kelas: siswa.kelas,
-      tanggal: formTanggal,
-      kategori: formKategori,
-      perilaku: formPerilaku,
-      jenis: selectedBehavior.jenis,
-      poin: selectedBehavior.poin,
-      dicatatOleh: 'Ahmad Fauzi, S.Pd',
-    };
-    setEntries(prev => [newEntry, ...prev]);
-    setShowForm(false);
-    setFormSiswa(''); setFormKategori(''); setFormPerilaku('');
+    if (!formSiswa || !formCategoryId || !selectedCategory) return;
+
+    try {
+      setIsSaving(true);
+      
+      // 1. Insert Log
+      const { error: logError } = await supabase.from('behavior_logs').insert([{
+        student_id: formSiswa,
+        category_id: formCategoryId,
+        points: selectedCategory.points,
+        date: formTanggal,
+        keterangan: formKeterangan
+      }]);
+
+      if (logError) throw logError;
+
+      // 2. Update Student Poin
+      const { data: student } = await supabase.from('students').select('total_poin').eq('id', formSiswa).single();
+      const currentPoin = student?.total_poin || 0;
+      
+      await supabase.from('students').update({
+        total_poin: currentPoin + selectedCategory.points
+      }).eq('id', formSiswa);
+
+      toast.success('Poin berhasil dicatat');
+      setShowForm(false);
+      fetchData();
+    } catch (error: any) {
+      console.error('Error saving poin:', error.message);
+      toast.error('Gagal mencatat poin');
+    } finally {
+      setIsSaving(false);
+    }
   }
 
-  function handleDelete(id: string) {
-    setEntries(prev => prev.filter(e => e.id !== id));
+  async function handleDelete(id: string) {
+    if (!confirm('Hapus entri ini? Poin siswa tidak akan otomatis kembali (manual update required for now).')) return;
+    
+    try {
+      const { error } = await supabase.from('behavior_logs').delete().eq('id', id);
+      if (error) throw error;
+      toast.success('Entri dihapus');
+      fetchData();
+    } catch (error: any) {
+      toast.error('Gagal menghapus entri');
+    }
   }
 
   return (
@@ -250,39 +212,39 @@ export default function PoinPerilakuPage() {
                 <select value={formSiswa} onChange={e => setFormSiswa(e.target.value)} required
                   className="w-full px-3 py-2 rounded-lg border text-sm" style={{ borderColor: 'var(--border)', backgroundColor: 'var(--input)' }}>
                   <option value="">-- Pilih Siswa --</option>
-                  {mockSiswa.map(s => <option key={s.id} value={s.id}>{s.nama} ({s.kelas})</option>)}
+                  {students.map(s => <option key={s.id} value={s.id}>{s.nama} ({s.kelas})</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium mb-1" style={{ color: 'var(--muted-foreground)' }}>Kategori</label>
-                <select value={formKategori} onChange={e => { setFormKategori(e.target.value); setFormPerilaku(''); }} required
-                  className="w-full px-3 py-2 rounded-lg border text-sm" style={{ borderColor: 'var(--border)', backgroundColor: 'var(--input)' }}>
-                  <option value="">-- Pilih Kategori --</option>
-                  {behaviorCategories.map(c => <option key={c.kategori} value={c.kategori}>{c.kategori}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-medium mb-1" style={{ color: 'var(--muted-foreground)' }}>Perilaku</label>
-                <select value={formPerilaku} onChange={e => setFormPerilaku(e.target.value)} required disabled={!formKategori}
+                <label className="block text-xs font-medium mb-1" style={{ color: 'var(--muted-foreground)' }}>Kategori & Perilaku</label>
+                <select value={formCategoryId} onChange={e => setFormCategoryId(e.target.value)} required
                   className="w-full px-3 py-2 rounded-lg border text-sm" style={{ borderColor: 'var(--border)', backgroundColor: 'var(--input)' }}>
                   <option value="">-- Pilih Perilaku --</option>
-                  {selectedCategory?.items.map(item => (
-                    <option key={item.perilaku} value={item.perilaku}>
-                      {item.jenis === 'positif' ? '✅' : '❌'} {item.perilaku} ({item.poin > 0 ? '+' : ''}{item.poin})
+                  {categories.map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.type === 'Kebaikan' ? '✅' : '❌'} {c.name} ({c.points > 0 ? '+' : ''}{c.points})
                     </option>
                   ))}
                 </select>
               </div>
-              {selectedBehavior && (
+              <div>
+                <label className="block text-xs font-medium mb-1" style={{ color: 'var(--muted-foreground)' }}>Keterangan (Opsional)</label>
+                <input type="text" value={formKeterangan} onChange={e => setFormKeterangan(e.target.value)} placeholder="Catatan tambahan..."
+                  className="w-full px-3 py-2 rounded-lg border text-sm" style={{ borderColor: 'var(--border)', backgroundColor: 'var(--input)' }} />
+              </div>
+              {selectedCategory && (
                 <div className="sm:col-span-2 lg:col-span-4">
-                  <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold ${selectedBehavior.jenis === 'positif' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                    {selectedBehavior.jenis === 'positif' ? <CheckCircle size={16} /> : <XCircle size={16} />}
-                    Poin: {selectedBehavior.poin > 0 ? '+' : ''}{selectedBehavior.poin} — {selectedBehavior.jenis === 'positif' ? 'Perilaku Positif' : 'Pelanggaran'}
+                  <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold ${selectedCategory.type === 'Kebaikan' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    {selectedCategory.type === 'Kebaikan' ? <CheckCircle size={16} /> : <XCircle size={16} />}
+                    Poin: {selectedCategory.points > 0 ? '+' : ''}{selectedCategory.points} — {selectedCategory.type === 'Kebaikan' ? 'Perilaku Positif' : 'Pelanggaran'}
                   </div>
                 </div>
               )}
               <div className="sm:col-span-2 lg:col-span-4 flex gap-3">
-                <button type="submit" className="btn-primary"><CheckCircle size={16} /> Simpan Poin</button>
+                <button type="submit" disabled={isSaving} className="btn-primary">
+                  {isSaving ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />} 
+                  Simpan Poin
+                </button>
                 <button type="button" className="btn-secondary" onClick={() => setShowForm(false)}>Batal</button>
               </div>
             </form>
@@ -303,24 +265,21 @@ export default function PoinPerilakuPage() {
               <option value="positif">Positif</option>
               <option value="negatif">Negatif</option>
             </select>
-            <select value={filterKategori} onChange={e => setFilterKategori(e.target.value)}
-              className="px-3 py-2 rounded-lg border text-sm" style={{ borderColor: 'var(--border)', backgroundColor: 'var(--input)' }}>
-              <option value="Semua">Semua Kategori</option>
-              {behaviorCategories.map(c => <option key={c.kategori} value={c.kategori}>{c.kategori}</option>)}
-            </select>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ backgroundColor: 'var(--muted)', borderBottom: '1px solid var(--border)' }}>
-                  {['Tanggal', 'Siswa', 'Kelas', 'Kategori', 'Perilaku', 'Jenis', 'Poin', 'Dicatat Oleh', 'Aksi'].map(h => (
+                  {['Tanggal', 'Siswa', 'Kelas', 'Perilaku', 'Jenis', 'Poin', 'Dicatat Oleh', 'Aksi'].map(h => (
                     <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--muted-foreground)' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {filtered.length === 0 ? (
-                  <tr><td colSpan={9} className="px-4 py-8 text-center text-sm" style={{ color: 'var(--muted-foreground)' }}>Tidak ada data poin</td></tr>
+                {isLoading ? (
+                  <tr><td colSpan={8} className="px-4 py-8 text-center"><Loader2 size={24} className="animate-spin mx-auto text-primary" /></td></tr>
+                ) : filtered.length === 0 ? (
+                  <tr><td colSpan={8} className="px-4 py-8 text-center text-sm" style={{ color: 'var(--muted-foreground)' }}>Tidak ada data poin</td></tr>
                 ) : filtered.map((entry, i) => (
                   <tr key={entry.id} style={{ borderBottom: '1px solid var(--border)', backgroundColor: i % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.01)' }}>
                     <td className="px-4 py-3 whitespace-nowrap" style={{ color: 'var(--muted-foreground)' }}>{entry.tanggal}</td>
@@ -328,7 +287,6 @@ export default function PoinPerilakuPage() {
                     <td className="px-4 py-3">
                       <span className="px-2 py-0.5 rounded text-xs font-semibold" style={{ backgroundColor: 'var(--primary-light)', color: 'var(--primary)' }}>{entry.kelas}</span>
                     </td>
-                    <td className="px-4 py-3 text-xs" style={{ color: 'var(--muted-foreground)' }}>{entry.kategori}</td>
                     <td className="px-4 py-3 max-w-xs truncate" style={{ color: 'var(--foreground)' }}>{entry.perilaku}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${entry.jenis === 'positif' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
@@ -361,15 +319,15 @@ export default function PoinPerilakuPage() {
             <Award size={18} style={{ color: 'var(--primary)' }} /> Referensi Poin Perilaku MI Islamiyah
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {behaviorCategories.map(cat => (
-              <div key={cat.kategori} className="rounded-lg border p-4" style={{ borderColor: 'var(--border)' }}>
-                <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--primary)' }}>{cat.kategori}</h3>
+            {Array.from(new Set(categories.map(c => c.group_name))).map(group => (
+              <div key={group} className="rounded-lg border p-4" style={{ borderColor: 'var(--border)' }}>
+                <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--primary)' }}>{group}</h3>
                 <div className="space-y-1.5">
-                  {cat.items.map((item, i) => (
+                  {categories.filter(c => c.group_name === group).map((item, i) => (
                     <div key={i} className="flex items-start justify-between gap-2 text-xs">
-                      <span className="flex-1" style={{ color: 'var(--foreground)' }}>{item.perilaku}</span>
-                      <span className={`flex-shrink-0 font-bold ${item.poin > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {item.poin > 0 ? '+' : ''}{item.poin}
+                      <span className="flex-1" style={{ color: 'var(--foreground)' }}>{item.name}</span>
+                      <span className={`flex-shrink-0 font-bold ${item.points > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {item.points > 0 ? '+' : ''}{item.points}
                       </span>
                     </div>
                   ))}
