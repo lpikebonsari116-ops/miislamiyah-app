@@ -63,12 +63,7 @@ export default function AbsensiPage() {
   const [saved, setSaved] = useState(false);
   const [searchRiwayat, setSearchRiwayat] = useState('');
 
-  // Fetch history
-  useEffect(() => {
-    fetchHistory();
-  }, []);
-
-  const fetchHistory = async () => {
+  const fetchHistory = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('attendance_sessions')
