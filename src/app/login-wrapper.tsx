@@ -81,8 +81,8 @@ export default function LoginPageWrapper() {
           </p>
         </div>
 
-        {/* Login Card */}
-        <div className="bg-white/40 backdrop-blur-xl rounded-2xl p-6 shadow-2xl border border-white/30">
+        {/* Login Form (Tanpa Kotak/Card untuk kesan Transparan Maksimal) */}
+        <div className="p-2">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Error Message */}
             {error && (
@@ -96,7 +96,7 @@ export default function LoginPageWrapper() {
 
             {/* Username Input */}
             <div className="space-y-2">
-              <label className="block text-sm font-bold text-slate-800">
+              <label className="block text-sm font-bold text-white drop-shadow-sm">
                 Username
               </label>
               <input
@@ -105,14 +105,14 @@ export default function LoginPageWrapper() {
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Masukkan username"
                 disabled={isLoading}
-                className="w-full px-4 py-3 rounded-xl border border-white/40 bg-white/60 outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 transition-all placeholder:text-slate-500 text-slate-900 font-medium"
+                className="w-full px-4 py-3 rounded-xl border border-white/40 bg-white/20 backdrop-blur-md outline-none focus:border-white focus:ring-4 focus:ring-white/10 transition-all placeholder:text-white/60 text-white font-medium"
                 required
               />
             </div>
 
             {/* Password Input */}
             <div className="space-y-2">
-              <label className="block text-sm font-bold text-slate-800">
+              <label className="block text-sm font-bold text-white drop-shadow-sm">
                 Password
               </label>
               <input
@@ -121,7 +121,7 @@ export default function LoginPageWrapper() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Masukkan password"
                 disabled={isLoading}
-                className="w-full px-4 py-3 rounded-xl border border-white/40 bg-white/60 outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 transition-all placeholder:text-slate-500 text-slate-900 font-medium"
+                className="w-full px-4 py-3 rounded-xl border border-white/40 bg-white/20 backdrop-blur-md outline-none focus:border-white focus:ring-4 focus:ring-white/10 transition-all placeholder:text-white/60 text-white font-medium"
                 required
               />
             </div>
@@ -130,7 +130,7 @@ export default function LoginPageWrapper() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3.5 px-4 rounded-xl font-bold text-white bg-primary/90 hover:bg-primary shadow-lg shadow-primary/20 transition-all active:scale-[0.98] disabled:opacity-70"
+              className="w-full py-3.5 px-4 rounded-xl font-bold text-white bg-primary hover:bg-primary-dark shadow-lg shadow-primary/20 transition-all active:scale-[0.98] disabled:opacity-70 border border-white/10"
             >
               {isLoading ? 'Sedang login...' : 'Masuk ke Sistem'}
             </button>
@@ -138,11 +138,11 @@ export default function LoginPageWrapper() {
         </div>
 
         {/* Footer */}
-        <div className="mt-12 text-center space-y-2">
-           <p className="text-white text-xs font-bold tracking-widest drop-shadow-md uppercase">
+        <div className="mt-16 sm:mt-12 text-center space-y-2 pb-8 sm:pb-0">
+           <p className="text-white text-[10px] sm:text-xs font-bold tracking-[0.2em] drop-shadow-lg uppercase">
              Lembaga Pendidikan Islam Kebonsari - MALANG
            </p>
-           <div className="w-10 h-1 bg-white/20 mx-auto rounded-full"></div>
+           <div className="w-8 h-1 bg-white/30 mx-auto rounded-full"></div>
         </div>
       </div>
     </div>
