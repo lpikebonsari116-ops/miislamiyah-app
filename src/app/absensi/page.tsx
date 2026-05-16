@@ -24,6 +24,22 @@ interface AbsensiSession {
   records: AbsensiRecord[];
 }
 
+interface SupabaseAttendanceRecord {
+  status: StatusAbsensi;
+  keterangan: string | null;
+  student_id: string;
+  students: { nama: string } | null;
+}
+
+interface SupabaseAttendanceSession {
+  id: string;
+  kelas: string;
+  tanggal: string;
+  mata_pelajaran: string;
+  guru: string;
+  attendance_records: SupabaseAttendanceRecord[];
+}
+
 const KELAS_OPTIONS = ['1A', '1B', '2A', '2B', '3A', '3B', '4A', '4B', '5A', '5B', '6A', '6B'];
 const MAPEL_OPTIONS = ['Al-Quran Hadits', 'Matematika', 'Bahasa Indonesia', 'IPA', 'IPS', 'Bahasa Inggris', 'Penjaskes', 'Tahfidz', 'Fiqih', 'Aqidah Akhlak'];
 
@@ -70,23 +86,115 @@ export default function AbsensiPage() {
       if (error) throw error;
 
       if (data) {
-        const mappedSessions: AbsensiSession[] = data.map((s: any) => ({
-          id: s.id,
-          kelas: s.kelas,
-          tanggal: s.tanggal,
-          mataPelajaran: s.mata_pelajaran,
-          guru: s.guru,
-          records: s.attendance_records.map((r: any) => ({
-            siswaId: r.student_id,
-            nama: r.students?.nama || 'N/A',
-            status: r.status,
-            keterangan: r.keterangan || '',
-          })),
-        }));
+        const mappedSessions: AbsensiSession[] = (data as unknown as SupabaseAttendanceSession[]).map(
+          (s) => ({
+            id: s.id,
+            kelas: s.kelas,
+            tanggal: s.tanggal,
+            mataPelajaran: s.mata_pelajaran,
+            guru: s.guru,
+            records: s.attendance_records.map((r) => ({
+              siswaId: r.student_id,
+              nama: r.students?.nama || 'N/A',
+              status: r.status,
+              keterangan: r.keterangan || '',
+            })),
+          })
+        );
         setSessions(mappedSessions);
       }
-    } catch (error: any) {
-      console.error('Error fetching history:', error.message);
+    } catch (_error: unknown) {
+      console.error('Error fetching history');
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchHistory();
+  }, [fetchHistory]);
+
+  const fetchStudentsByClass = async (kelas: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('students')
+        .select('id, nama')
+        .eq('kelas', kelas)
+        .eq('status', 'Aktif')
+        .order('nama', { ascending: true });
+
+      if (error) throw error;
+
+      if (data) {
+        setRecords(
+          data.map((s) => ({
+            siswaId: s.id,
+            nama: s.nama,
+            status: 'Hadir' as StatusAbsensi,
+            keterangan: '',
+          }))
+        );
+      }
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Error fetching students:', message);
+      toast.error('Gagal mengambil data siswa');
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'input') {
+      fetchStudentsByClass(selectedKelas);
+    }
+  }, [selectedKelas, activeTab]);
+
+  function setStatus(siswaId: string, status: StatusAbsensi) {
+    setRecords((prev) => prev.map((r) => (r.siswaId === siswaId ? { ...r, status } : r)));
+    setSaved(false);
+  }
+
+  function setKeterangan(siswaId: string, keterangan: string) {
+    setRecords((prev) => prev.map((r) => (r.siswaId === siswaId ? { ...r, keterangan } : r)));
+  }
+
+  const handleSave = async () => {
+    try {
+      // 1. Create Session
+      const { data: sessionData, error: sessionError } = await supabase
+        .from('attendance_sessions')
+        .insert([
+          {
+            kelas: selectedKelas,
+            tanggal: selectedTanggal,
+            mata_pelajaran: selectedMapel,
+            guru: 'Ahmad Fauzi, S.Pd', // In production, get from auth context
+          },
+        ])
+        .select()
+        .single();
+
+      if (sessionError) throw sessionError;
+
+      // 2. Create Records
+      const recordPayload = records.map((r) => ({
+        session_id: sessionData.id,
+        student_id: r.siswaId,
+        status: r.status,
+        keterangan: r.keterangan,
+      }));
+
+      const { error: recordsError } = await supabase
+        .from('attendance_records')
+        .insert(recordPayload);
+
+      if (recordsError) throw recordsError;
+
+      setSaved(true);
+      toast.success('Absensi berhasil disimpan');
+      fetchHistory();
+      setTimeout(() => setSaved(false), 2000);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Error saving attendance:', message);
+      toast.error('Gagal menyimpan absensi');
     }
   };
 

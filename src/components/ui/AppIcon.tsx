@@ -14,20 +14,22 @@ interface IconProps {
     className?: string;
     onClick?: () => void;
     disabled?: boolean;
-    [key: string]: any;
+  [key: string]: unknown;
 }
 
 function Icon({
-    name,
-    variant = 'outline',
-    size = 24,
-    className = '',
-    onClick,
-    disabled = false,
-    ...props
+  name,
+  variant = 'outline',
+  size = 24,
+  className = '',
+  onClick,
+  disabled = false,
+  ...props
 }: IconProps) {
-    const iconSet = variant === 'solid' ? HeroIconsSolid : HeroIcons;
-    const IconComponent = iconSet[name as keyof typeof iconSet] as React.ComponentType<any>;
+  const iconSet = variant === 'solid' ? HeroIconsSolid : HeroIcons;
+  const IconComponent = iconSet[name as keyof typeof iconSet] as React.ComponentType<
+    React.SVGProps<SVGSVGElement>
+  >;
 
     if (!IconComponent) {
         return (
