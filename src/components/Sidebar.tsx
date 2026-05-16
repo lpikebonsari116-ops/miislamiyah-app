@@ -117,13 +117,13 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
           <div className="flex items-center gap-2 min-w-0">
             <AppImage
               src="/assets/images/Logo_SUKMA_1_-1778584431642.png"
-              alt="Logo SUKMA - Sekolah Unggulan Kota Malang"
+              alt="Logo LMS - MI Islamiyah Malang"
               width={40}
               height={40}
               className="rounded-lg flex-shrink-0 object-contain"
             />
             <div className="min-w-0">
-              <p className="text-white font-bold text-sm leading-tight truncate">SUKMA</p>
+              <p className="text-white font-bold text-sm leading-tight truncate">LMS</p>
               <p className="text-xs leading-tight truncate" style={{ color: 'var(--sidebar-muted)' }}>
                 Sekolah Para Juara
               </p>
@@ -134,7 +134,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
           <div className="flex justify-center w-full">
             <AppImage
               src="/assets/images/Logo_SUKMA_1_-1778584431642.png"
-              alt="Logo SUKMA"
+              alt="Logo LMS"
               width={32}
               height={32}
               className="rounded-md object-contain"

@@ -20,24 +20,26 @@ export async function authenticate(
 
   if (!foundUser) {
     // Fallback search in Supabase for convenience (optional)
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('username', username.toLowerCase())
-        .single();
+    if (supabase && process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('username', username.toLowerCase())
+          .single();
 
-      if (!error && data && data.password === password) {
-        return {
-          id: data.id,
-          username: data.username,
-          role: data.role as UserRole,
-          name: data.nama_lengkap || data.name,
-          email: data.email,
-        };
+        if (!error && data && data.password === password) {
+          return {
+            id: data.id,
+            username: data.username,
+            role: data.role as UserRole,
+            name: data.nama_lengkap || data.name,
+            email: data.email,
+          };
+        }
+      } catch (e) {
+        console.warn('Supabase auth fallback failed');
       }
-    } catch (e) {
-      console.warn('Supabase auth fallback failed');
     }
     
     throw new Error('Username atau Password salah');

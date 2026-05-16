@@ -15,7 +15,7 @@ export default function DashboardHeader() {
           />
           <div>
             <h1 className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>
-              Dashboard SUKMA
+              Dashboard LMS
             </h1>
             <p className="text-sm text-muted-foreground">
               MI Islamiyah Malang — Tahun Ajaran 2025/2026

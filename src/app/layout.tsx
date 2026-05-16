@@ -15,21 +15,17 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  themeColor: '#16a34a',
 };
 
 export const metadata: Metadata = {
-  title: 'SUKMA — Sistem Manajemen Sekolah MI Islamiyah Malang',
-  description: 'SUKMA adalah sistem manajemen internal MI Islamiyah Malang untuk mengelola data siswa, poin perilaku, life skills harian, dan laporan akademik.',
+  title: 'LMS — MI ISLAMIYAH - Malang',
+  description: 'Learning Management System adalah sistem manajemen internal MI Islamiyah Malang untuk mengelola data siswa, poin perilaku, life skills harian, dan laporan akademik.',
   manifest: '/manifest.json',
-  themeColor: '#16a34a',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'SUKMA',
-  },
-  icons: {
-    icon: [{ url: '/favicon.ico', type: 'image/x-icon' }],
-    apple: [{ url: '/assets/images/Logo_SUKMA_1_-1778584431642.png' }],
+    title: 'LMS MI ISLAMIYAH',
   },
 };
 
@@ -43,18 +39,7 @@ export default function RootLayout({
       <body className={plusJakartaSans.className}>
         <AuthProvider>
           {children}
-          <Toaster
-            position="bottom-right"
-            toastOptions={{
-              style: {
-                fontFamily: 'var(--font-plus-jakarta-sans)',
-                fontSize: '0.875rem',
-              },
-            }}
-          />
-
-          <script type="module" async src="https://static.rocket.new/rocket-web.js?_cfg=https%3A%2F%2Fsukma8155back.builtwithrocket.new&_be=https%3A%2F%2Fappanalytics.rocket.new&_v=0.1.18" />
-          <script type="module" defer src="https://static.rocket.new/rocket-shot.js?v=0.0.2" />
+          <Toaster position="top-right" richColors closeButton />
         </AuthProvider>
       </body>
     </html>

@@ -1,7 +1,7 @@
 {
-  "name": "SUKMA - MI Islamiyah",
-  "short_name": "SUKMA",
-  "description": "Sistem Manajemen Sekolah MI Islamiyah",
+  "name": "LMS - MI Islamiyah",
+  "short_name": "LMS",
+  "description": "Learning Management System MI Islamiyah",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
