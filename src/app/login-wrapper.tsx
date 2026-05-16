@@ -78,10 +78,10 @@ export default function LoginPageWrapper() {
             <img src="/assets/images/Logo_SUKMA_1_-1778584431642.png" alt="SUKMA Logo" className="h-12 sm:h-16 drop-shadow-lg" />
           </div>
           <h1 className="text-xl sm:text-3xl font-black text-white drop-shadow-md uppercase tracking-tight">
-            SUKMA
+            LEARNING MANAGEMENT SYSTEM
           </h1>
           <p className="text-[10px] sm:text-sm mt-1 font-medium text-white/90 drop-shadow-sm">
-            Sistem Manajemen Sekolah MI Islamiyah Malang
+            MI ISLAMIYAH - Malang
           </p>
         </div>
 
