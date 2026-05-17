@@ -1,41 +1,68 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
-import { Plus, Edit2, Trash2, Users, BookOpen, X, Save } from 'lucide-react';
+import { Plus, Edit2, Trash2, Users, BookOpen, X, Save, PlusCircle, MinusCircle, Eye, Search } from 'lucide-react';
+import { getGuruList } from '@/utils/guru';
+import { getStudentsList, saveStudentsList } from '@/utils/students';
+import { Student } from '@/app/student-management/components/StudentManagementClient';
+
+interface SiswaKelas {
+  id: string;
+  nis: string;
+  nama: string;
+}
 
 interface Kelas {
   id: string;
   namaKelas: string;
   tingkat: number;
   waliKelas: string;
-  jumlahSiswa: number;
   ruangan: string;
   tahunAjaran: string;
   status: 'Aktif' | 'Tidak Aktif';
+  siswa: SiswaKelas[];
 }
 
-const mockKelas: Kelas[] = [
-  { id: 'k-1a', namaKelas: '1A', tingkat: 1, waliKelas: 'Ibu Laila Mufidah, S.Pd', jumlahSiswa: 28, ruangan: 'Ruang 101', tahunAjaran: '2024/2025', status: 'Aktif' },
-  { id: 'k-1b', namaKelas: '1B', tingkat: 1, waliKelas: 'Ibu Khadijah Nur, S.Pd', jumlahSiswa: 27, ruangan: 'Ruang 102', tahunAjaran: '2024/2025', status: 'Aktif' },
-  { id: 'k-2a', namaKelas: '2A', tingkat: 2, waliKelas: 'Pak Denny Firmansyah, S.Pd', jumlahSiswa: 30, ruangan: 'Ruang 201', tahunAjaran: '2024/2025', status: 'Aktif' },
-  { id: 'k-2b', namaKelas: '2B', tingkat: 2, waliKelas: 'Ibu Khadijah Nur, S.Pd', jumlahSiswa: 29, ruangan: 'Ruang 202', tahunAjaran: '2024/2025', status: 'Aktif' },
-  { id: 'k-3a', namaKelas: '3A', tingkat: 3, waliKelas: 'Ibu Nurul Hidayah, S.Pd', jumlahSiswa: 31, ruangan: 'Ruang 301', tahunAjaran: '2024/2025', status: 'Aktif' },
-  { id: 'k-3b', namaKelas: '3B', tingkat: 3, waliKelas: 'Pak Rudi Hartono, S.Pd', jumlahSiswa: 28, ruangan: 'Ruang 302', tahunAjaran: '2024/2025', status: 'Aktif' },
-  { id: 'k-4a', namaKelas: '4A', tingkat: 4, waliKelas: 'Ibu Sari Dewi, S.Pd', jumlahSiswa: 32, ruangan: 'Ruang 401', tahunAjaran: '2024/2025', status: 'Aktif' },
-  { id: 'k-4b', namaKelas: '4B', tingkat: 4, waliKelas: 'Pak Ahmad Fauzi, S.Pd', jumlahSiswa: 30, ruangan: 'Ruang 402', tahunAjaran: '2024/2025', status: 'Aktif' },
-  { id: 'k-5a', namaKelas: '5A', tingkat: 5, waliKelas: 'Ibu Rina Kusuma, S.Pd', jumlahSiswa: 29, ruangan: 'Ruang 501', tahunAjaran: '2024/2025', status: 'Aktif' },
-  { id: 'k-5b', namaKelas: '5B', tingkat: 5, waliKelas: 'Pak Agus Wahyudi, S.Pd', jumlahSiswa: 28, ruangan: 'Ruang 502', tahunAjaran: '2024/2025', status: 'Aktif' },
-  { id: 'k-6a', namaKelas: '6A', tingkat: 6, waliKelas: 'Ibu Fatimah Zahra, S.Pd', jumlahSiswa: 27, ruangan: 'Ruang 601', tahunAjaran: '2024/2025', status: 'Aktif' },
-  { id: 'k-6b', namaKelas: '6B', tingkat: 6, waliKelas: 'Pak Yusuf Effendi, S.Pd', jumlahSiswa: 26, ruangan: 'Ruang 602', tahunAjaran: '2024/2025', status: 'Aktif' },
+const KELAS_STORAGE_KEY = 'sukma_kelas_list';
+
+const getDefaultKelas = (): Kelas[] => [
+  { id: 'k-1a', namaKelas: '1A', tingkat: 1, waliKelas: 'Ibu Laila Mufidah, S.Pd', ruangan: 'Ruang 101', tahunAjaran: '2024/2025', status: 'Aktif', siswa: [] },
+  { id: 'k-1b', namaKelas: '1B', tingkat: 1, waliKelas: 'Ibu Khadijah Nur, S.Pd', ruangan: 'Ruang 102', tahunAjaran: '2024/2025', status: 'Aktif', siswa: [] },
+  { id: 'k-2a', namaKelas: '2A', tingkat: 2, waliKelas: 'Pak Denny Firmansyah, S.Pd', ruangan: 'Ruang 201', tahunAjaran: '2024/2025', status: 'Aktif', siswa: [] },
+  { id: 'k-2b', namaKelas: '2B', tingkat: 2, waliKelas: 'Ibu Khadijah Nur, S.Pd', ruangan: 'Ruang 202', tahunAjaran: '2024/2025', status: 'Aktif', siswa: [] },
+  { id: 'k-3a', namaKelas: '3A', tingkat: 3, waliKelas: 'Ibu Nurul Hidayah, S.Pd', ruangan: 'Ruang 301', tahunAjaran: '2024/2025', status: 'Aktif', siswa: [] },
+  { id: 'k-3b', namaKelas: '3B', tingkat: 3, waliKelas: 'Pak Rudi Hartono, S.Pd', ruangan: 'Ruang 302', tahunAjaran: '2024/2025', status: 'Aktif', siswa: [] },
+  { id: 'k-4a', namaKelas: '4A', tingkat: 4, waliKelas: 'Ibu Sari Dewi, S.Pd', ruangan: 'Ruang 401', tahunAjaran: '2024/2025', status: 'Aktif', siswa: [] },
+  { id: 'k-4b', namaKelas: '4B', tingkat: 4, waliKelas: 'Pak Ahmad Fauzi, S.Pd', ruangan: 'Ruang 402', tahunAjaran: '2024/2025', status: 'Aktif', siswa: [] },
+  { id: 'k-5a', namaKelas: '5A', tingkat: 5, waliKelas: 'Ibu Rina Kusuma, S.Pd', ruangan: 'Ruang 501', tahunAjaran: '2024/2025', status: 'Aktif', siswa: [] },
+  { id: 'k-5b', namaKelas: '5B', tingkat: 5, waliKelas: 'Pak Agus Wahyudi, S.Pd', ruangan: 'Ruang 502', tahunAjaran: '2024/2025', status: 'Aktif', siswa: [] },
+  { id: 'k-6a', namaKelas: '6A', tingkat: 6, waliKelas: 'Ibu Fatimah Zahra, S.Pd', ruangan: 'Ruang 601', tahunAjaran: '2024/2025', status: 'Aktif', siswa: [] },
+  { id: 'k-6b', namaKelas: '6B', tingkat: 6, waliKelas: 'Pak Yusuf Effendi, S.Pd', ruangan: 'Ruang 602', tahunAjaran: '2024/2025', status: 'Aktif', siswa: [] },
 ];
 
-const guruOptions = [
-  'Ibu Laila Mufidah, S.Pd', 'Ibu Khadijah Nur, S.Pd', 'Pak Denny Firmansyah, S.Pd',
-  'Ibu Nurul Hidayah, S.Pd', 'Pak Rudi Hartono, S.Pd', 'Ibu Sari Dewi, S.Pd',
-  'Pak Ahmad Fauzi, S.Pd', 'Ibu Rina Kusuma, S.Pd', 'Pak Agus Wahyudi, S.Pd',
-  'Ibu Fatimah Zahra, S.Pd', 'Pak Yusuf Effendi, S.Pd',
-];
+const getKelasList = (): Kelas[] => {
+  try {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem(KELAS_STORAGE_KEY);
+      return stored ? JSON.parse(stored) : getDefaultKelas();
+    }
+    return getDefaultKelas();
+  } catch (error) {
+    console.error('Failed to get kelas list:', error);
+    return getDefaultKelas();
+  }
+};
+
+const saveKelasList = (kelas: Kelas[]): void => {
+  try {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(KELAS_STORAGE_KEY, JSON.stringify(kelas));
+    }
+  } catch (error) {
+    console.error('Failed to save kelas list:', error);
+  }
+};
 
 const TINGKAT_COLORS: Record<number, { bg: string; color: string }> = {
   1: { bg: '#dbeafe', color: '#1e40af' },
@@ -51,24 +78,46 @@ interface FormState {
   tingkat: number;
   waliKelas: string;
   ruangan: string;
-  jumlahSiswa: number;
   tahunAjaran: string;
   status: 'Aktif' | 'Tidak Aktif';
 }
 
 const emptyForm: FormState = {
-  namaKelas: '', tingkat: 1, waliKelas: '', ruangan: '', jumlahSiswa: 0, tahunAjaran: '2024/2025', status: 'Aktif',
+  namaKelas: '', tingkat: 1, waliKelas: '', ruangan: '', tahunAjaran: '2024/2025', status: 'Aktif',
 };
 
 export default function ManajemenKelasPage() {
-  const [kelasList, setKelasList] = useState<Kelas[]>(mockKelas);
+  const [kelasList, setKelasList] = useState<Kelas[]>([]);
+  const [guruOptions, setGuruOptions] = useState<string[]>([]);
+  const [allStudents, setAllStudents] = useState<Student[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [editKelas, setEditKelas] = useState<Kelas | null>(null);
   const [deleteKelas, setDeleteKelas] = useState<Kelas | null>(null);
+  const [viewKelas, setViewKelas] = useState<Kelas | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
+  const [selectedSiswaId, setSelectedSiswaId] = useState<string>('');
+  const [searchSiswa, setSearchSiswa] = useState('');
 
-  const totalSiswa = kelasList.reduce((s, k) => s + k.jumlahSiswa, 0);
+  useEffect(() => {
+    setKelasList(getKelasList());
+    const guruList = getGuruList();
+    setGuruOptions(guruList.map(g => g.nama));
+    setAllStudents(getStudentsList());
+  }, []);
+
+  const totalSiswa = kelasList.reduce((s, k) => s + k.siswa.length, 0);
   const tingkatGroups = [1, 2, 3, 4, 5, 6];
+
+  const availableStudents = allStudents.filter(student => {
+    // Filter siswa yang belum terdaftar di kelas manapun
+    const isAlreadyInClass = kelasList.some(kelas => 
+      kelas.siswa.some(siswa => siswa.nis === student.nis)
+    );
+    // Filter berdasarkan search
+    const matchesSearch = student.nama.toLowerCase().includes(searchSiswa.toLowerCase()) || 
+                          student.nis.includes(searchSiswa);
+    return !isAlreadyInClass && matchesSearch;
+  });
 
   function openAdd() {
     setEditKelas(null);
@@ -80,7 +129,7 @@ export default function ManajemenKelasPage() {
     setEditKelas(kelas);
     setForm({
       namaKelas: kelas.namaKelas, tingkat: kelas.tingkat, waliKelas: kelas.waliKelas,
-      ruangan: kelas.ruangan, jumlahSiswa: kelas.jumlahSiswa, tahunAjaran: kelas.tahunAjaran, status: kelas.status,
+      ruangan: kelas.ruangan, tahunAjaran: kelas.tahunAjaran, status: kelas.status,
     });
     setShowModal(true);
   }
@@ -88,18 +137,64 @@ export default function ManajemenKelasPage() {
   function handleSave() {
     if (!form.namaKelas || !form.waliKelas || !form.ruangan) return;
     if (editKelas) {
-      setKelasList(prev => prev.map(k => k.id === editKelas.id ? { ...k, ...form } : k));
+      const updatedList = kelasList.map(k => k.id === editKelas.id ? { ...k, ...form } : k);
+      setKelasList(updatedList);
+      saveKelasList(updatedList);
     } else {
-      setKelasList(prev => [...prev, { id: `k-${Date.now()}`, ...form }]);
+      const newKelas: Kelas = { id: `k-${Date.now()}`, ...form, siswa: [] };
+      const updatedList = [...kelasList, newKelas];
+      setKelasList(updatedList);
+      saveKelasList(updatedList);
     }
     setShowModal(false);
   }
 
   function handleDelete() {
     if (!deleteKelas) return;
-    setKelasList(prev => prev.filter(k => k.id !== deleteKelas.id));
+    const updatedList = kelasList.filter(k => k.id !== deleteKelas.id);
+    setKelasList(updatedList);
+    saveKelasList(updatedList);
     setDeleteKelas(null);
   }
+
+  const addSiswaToKelas = (kelas: Kelas) => {
+    if (!selectedSiswaId) return;
+    
+    const selectedStudent = allStudents.find(s => s.id === selectedSiswaId);
+    if (!selectedStudent) return;
+
+    const siswaBaru: SiswaKelas = {
+      id: selectedStudent.id,
+      nis: selectedStudent.nis,
+      nama: selectedStudent.nama
+    };
+
+    const updatedList = kelasList.map(k => {
+      if (k.id === kelas.id) {
+        return { ...k, siswa: [...k.siswa, siswaBaru] };
+      }
+      return k;
+    });
+
+    setKelasList(updatedList);
+    saveKelasList(updatedList);
+    setViewKelas(updatedList.find(k => k.id === kelas.id) || null);
+    setSelectedSiswaId('');
+    setSearchSiswa('');
+  };
+
+  const removeSiswaFromKelas = (kelasId: string, siswaId: string) => {
+    const updatedList = kelasList.map(k => {
+      if (k.id === kelasId) {
+        return { ...k, siswa: k.siswa.filter(s => s.id !== siswaId) };
+      }
+      return k;
+    });
+
+    setKelasList(updatedList);
+    saveKelasList(updatedList);
+    setViewKelas(updatedList.find(k => k.id === kelasId) || null);
+  };
 
   return (
     <AppLayout>
@@ -108,7 +203,7 @@ export default function ManajemenKelasPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>Manajemen Kelas</h1>
-            <p className="text-sm mt-1" style={{ color: 'var(--muted-foreground)' }}>Kelola data kelas, wali kelas, dan ruangan MI Islamiyah</p>
+            <p className="text-sm mt-1" style={{ color: 'var(--muted-foreground)' }}>Kelola data kelas, wali kelas, dan siswa per kelas</p>
           </div>
           <button className="btn-primary" onClick={openAdd}><Plus size={16} /> Tambah Kelas</button>
         </div>
@@ -119,7 +214,7 @@ export default function ManajemenKelasPage() {
             { label: 'Total Kelas', value: kelasList.length, color: 'var(--primary)', bg: 'var(--primary-light)' },
             { label: 'Total Siswa', value: totalSiswa, color: 'var(--info)', bg: 'var(--info-bg)' },
             { label: 'Kelas Aktif', value: kelasList.filter(k => k.status === 'Aktif').length, color: 'var(--success)', bg: 'var(--success-bg)' },
-            { label: 'Rata-rata/Kelas', value: Math.round(totalSiswa / kelasList.length), color: 'var(--warning)', bg: 'var(--warning-bg)' },
+            { label: 'Rata-rata/Kelas', value: kelasList.length > 0 ? Math.round(totalSiswa / kelasList.length) : 0, color: 'var(--warning)', bg: 'var(--warning-bg)' },
           ].map((s, i) => (
             <div key={i} className="card-elevated p-4">
               <p className="text-2xl font-bold" style={{ color: s.color }}>{s.value}</p>
@@ -146,7 +241,7 @@ export default function ManajemenKelasPage() {
                   <div key={kelas.id} className="card-elevated p-4 hover:shadow-md transition-shadow">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg" style={{ backgroundColor: tc.bg, color: tc.color }}>
+                        <div className="w-9 h-9 rounded-lg flex items-center justify-center font-bold text-base" style={{ backgroundColor: tc.bg, color: tc.color }}>
                           {kelas.namaKelas}
                         </div>
                         <div>
@@ -159,23 +254,26 @@ export default function ManajemenKelasPage() {
                       </span>
                     </div>
                     <div className="space-y-1.5 mb-3">
-                      <div className="flex items-center gap-2 text-xs">
-                        <Users size={12} style={{ color: 'var(--muted-foreground)' }} />
+                      <div className="flex items-center gap-1.5 text-xs">
+                        <Users size={11} style={{ color: 'var(--muted-foreground)' }} />
                         <span style={{ color: 'var(--muted-foreground)' }}>Wali Kelas:</span>
                         <span className="font-medium truncate" style={{ color: 'var(--foreground)' }}>{kelas.waliKelas}</span>
                       </div>
-                      <div className="flex items-center gap-2 text-xs">
-                        <BookOpen size={12} style={{ color: 'var(--muted-foreground)' }} />
+                      <div className="flex items-center gap-1.5 text-xs">
+                        <BookOpen size={11} style={{ color: 'var(--muted-foreground)' }} />
                         <span style={{ color: 'var(--muted-foreground)' }}>Jumlah Siswa:</span>
-                        <span className="font-bold" style={{ color: 'var(--primary)' }}>{kelas.jumlahSiswa} siswa</span>
+                        <span className="font-bold" style={{ color: 'var(--primary)' }}>{kelas.siswa.length} siswa</span>
                       </div>
                     </div>
                     <div className="flex gap-2 pt-3 border-t" style={{ borderColor: 'var(--border)' }}>
-                      <button onClick={() => openEdit(kelas)} className="flex-1 btn-secondary text-xs py-1.5">
-                        <Edit2 size={12} /> Edit
+                      <button onClick={() => setViewKelas(kelas)} className="flex-1 text-xs py-1.5 px-2 rounded-lg border hover:bg-gray-50 transition-colors" style={{ borderColor: 'var(--border)' }}>
+                        <Eye size={12} />
                       </button>
-                      <button onClick={() => setDeleteKelas(kelas)} className="flex-1 btn-danger text-xs py-1.5">
-                        <Trash2 size={12} /> Hapus
+                      <button onClick={() => openEdit(kelas)} className="flex-1 text-xs py-1.5 px-2 rounded-lg border hover:bg-gray-50 transition-colors" style={{ borderColor: 'var(--border)' }}>
+                        <Edit2 size={12} />
+                      </button>
+                      <button onClick={() => setDeleteKelas(kelas)} className="flex-1 text-xs py-1.5 px-2 rounded-lg border hover:bg-red-50 transition-colors" style={{ borderColor: 'var(--border)', color: 'var(--danger)' }}>
+                        <Trash2 size={12} />
                       </button>
                     </div>
                   </div>
@@ -225,30 +323,127 @@ export default function ManajemenKelasPage() {
                       placeholder="cth: Ruang 401" className="w-full px-3 py-2 rounded-lg border text-sm" style={{ borderColor: 'var(--border)' }} />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium mb-1" style={{ color: 'var(--muted-foreground)' }}>Jumlah Siswa</label>
-                    <input type="number" value={form.jumlahSiswa} onChange={e => setForm(f => ({ ...f, jumlahSiswa: Number(e.target.value) }))}
-                      className="w-full px-3 py-2 rounded-lg border text-sm" style={{ borderColor: 'var(--border)' }} />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
                     <label className="block text-xs font-medium mb-1" style={{ color: 'var(--muted-foreground)' }}>Tahun Ajaran</label>
                     <input value={form.tahunAjaran} onChange={e => setForm(f => ({ ...f, tahunAjaran: e.target.value }))}
                       placeholder="2024/2025" className="w-full px-3 py-2 rounded-lg border text-sm" style={{ borderColor: 'var(--border)' }} />
                   </div>
-                  <div>
-                    <label className="block text-xs font-medium mb-1" style={{ color: 'var(--muted-foreground)' }}>Status</label>
-                    <select value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value as 'Aktif' | 'Tidak Aktif' }))}
-                      className="w-full px-3 py-2 rounded-lg border text-sm" style={{ borderColor: 'var(--border)' }}>
-                      <option value="Aktif">Aktif</option>
-                      <option value="Tidak Aktif">Tidak Aktif</option>
-                    </select>
-                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium mb-1" style={{ color: 'var(--muted-foreground)' }}>Status</label>
+                  <select value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value as 'Aktif' | 'Tidak Aktif' }))}
+                    className="w-full px-3 py-2 rounded-lg border text-sm" style={{ borderColor: 'var(--border)' }}>
+                    <option value="Aktif">Aktif</option>
+                    <option value="Tidak Aktif">Tidak Aktif</option>
+                  </select>
                 </div>
               </div>
               <div className="flex gap-3 mt-6">
                 <button className="btn-primary flex-1" onClick={handleSave}><Save size={16} /> Simpan</button>
                 <button className="btn-secondary flex-1" onClick={() => setShowModal(false)}>Batal</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* View Siswa Modal */}
+        {viewKelas && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/50">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[85vh] sm:max-h-[90vh] overflow-hidden flex flex-col">
+              <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4" style={{ borderBottom: '1px solid var(--border)' }}>
+                <div>
+                  <h2 className="text-base sm:text-lg font-bold" style={{ color: 'var(--foreground)' }}>Daftar Siswa Kelas {viewKelas.namaKelas}</h2>
+                  <p className="text-xs mt-1" style={{ color: 'var(--muted-foreground)' }}>
+                    {viewKelas.siswa.length} siswa · Wali Kelas: {viewKelas.waliKelas}
+                  </p>
+                </div>
+                <button onClick={() => setViewKelas(null)} className="p-2 rounded-lg hover:bg-gray-100">
+                  <X size={18} />
+                </button>
+              </div>
+              
+              <div className="p-4 sm:p-6" style={{ borderBottom: '1px solid var(--border)', backgroundColor: 'var(--muted)' }}>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <div className="flex-1 relative">
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--muted-foreground)' }} />
+                    <input
+                      type="text"
+                      value={searchSiswa}
+                      onChange={e => setSearchSiswa(e.target.value)}
+                      placeholder="Cari siswa..."
+                      className="w-full pl-10 pr-3 py-2 rounded-lg border text-sm"
+                      style={{ borderColor: 'var(--border)' }}
+                    />
+                  </div>
+                  <select
+                    value={selectedSiswaId}
+                    onChange={e => setSelectedSiswaId(e.target.value)}
+                    className="flex-1 px-3 py-2 rounded-lg border text-sm"
+                    style={{ borderColor: 'var(--border)' }}
+                  >
+                    <option value="">-- Pilih Siswa --</option>
+                    {availableStudents.map(student => (
+                      <option key={student.id} value={student.id}>
+                        {student.nis} - {student.nama}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => addSiswaToKelas(viewKelas)}
+                    disabled={!selectedSiswaId}
+                    className="btn-primary px-4 py-2 flex-shrink-0"
+                  >
+                    <PlusCircle size={16} />
+                  </button>
+                </div>
+                {allStudents.length === 0 && (
+                  <p className="text-xs mt-3" style={{ color: 'var(--muted-foreground)' }}>
+                    Belum ada data siswa. Silakan tambahkan siswa di halaman Manajemen Siswa terlebih dahulu.
+                  </p>
+                )}
+                {allStudents.length > 0 && availableStudents.length === 0 && searchSiswa === '' && (
+                  <p className="text-xs mt-3" style={{ color: 'var(--muted-foreground)' }}>
+                    Semua siswa sudah terdaftar di kelas.
+                  </p>
+                )}
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+                {viewKelas.siswa.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Users size={40} className="mx-auto mb-3" style={{ color: 'var(--muted-foreground)', opacity: 0.5 }} />
+                    <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>Belum ada siswa di kelas ini</p>
+                    <p className="text-xs mt-1" style={{ color: 'var(--muted-foreground)' }}>Pilih siswa dari dropdown di atas</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {viewKelas.siswa.map((siswa, index) => (
+                      <div key={siswa.id} className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: 'var(--muted)' }}>
+                        <div className="flex items-center gap-3">
+                          <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-bold" style={{ backgroundColor: 'var(--primary-light)', color: 'var(--primary)' }}>
+                            {index + 1}
+                          </span>
+                          <div className="min-w-0">
+                            <p className="font-medium text-sm truncate" style={{ color: 'var(--foreground)' }}>{siswa.nama}</p>
+                            <p className="text-xs font-mono" style={{ color: 'var(--muted-foreground)' }}>NIS: {siswa.nis}</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => removeSiswaFromKelas(viewKelas.id, siswa.id)}
+                          className="p-2 rounded-lg hover:bg-red-50 transition-colors flex-shrink-0"
+                          style={{ color: 'var(--danger)' }}
+                        >
+                          <MinusCircle size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              
+              <div className="px-4 sm:px-6 py-3 sm:py-4" style={{ borderTop: '1px solid var(--border)' }}>
+                <button className="btn-secondary w-full" onClick={() => setViewKelas(null)}>
+                  Tutup
+                </button>
               </div>
             </div>
           </div>
@@ -262,7 +457,7 @@ export default function ManajemenKelasPage() {
                 <Trash2 size={20} className="text-red-600" />
               </div>
               <h3 className="font-bold text-lg mb-1" style={{ color: 'var(--foreground)' }}>Hapus Kelas {deleteKelas.namaKelas}?</h3>
-              <p className="text-sm mb-4" style={{ color: 'var(--muted-foreground)' }}>Data kelas ini akan dihapus permanen.</p>
+              <p className="text-sm mb-4" style={{ color: 'var(--muted-foreground)' }}>Semua data siswa di kelas ini juga akan dihapus.</p>
               <div className="flex gap-3">
                 <button className="btn-danger flex-1" onClick={handleDelete}>Ya, Hapus</button>
                 <button className="btn-secondary flex-1" onClick={() => setDeleteKelas(null)}>Batal</button>

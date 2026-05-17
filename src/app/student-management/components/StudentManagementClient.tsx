@@ -1,11 +1,13 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { GraduationCap, Plus, Search, Upload, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Edit2, Trash2, Eye, Download, X, FileSpreadsheet,  } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { GraduationCap, Plus, Search, Upload, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Edit2, Trash2, Eye, Download, X, FileSpreadsheet, User } from 'lucide-react';
 import StudentFormModal from './StudentFormModal';
 import StudentDeleteModal from './StudentDeleteModal';
 import StudentDetailModal from './StudentDetailModal';
 import BulkImportModal from './BulkImportModal';
+import { getStudentsList, saveStudentsList } from '@/utils/students';
 
 export interface Student {
   id: string;
@@ -22,21 +24,17 @@ export interface Student {
   namaOrangTua: string;
 }
 
-const mockStudents: Student[] = [
-  { id: 'siswa-001', nis: '2024001', nama: 'Muhammad Hafidz Al-Farisi', kelas: '4A', jenisKelamin: 'L', tanggalLahir: '12/03/2016', alamat: 'Jl. Kebonsari No. 12, Malang', waliKelas: 'Ibu Sari Dewi', totalPoin: 94, status: 'Aktif', noTelp: '081234567890', namaOrangTua: 'Bapak Wahyu Al-Farisi' },
-  { id: 'siswa-002', nis: '2024002', nama: 'Aulia Rahmadani Putri', kelas: '3A', jenisKelamin: 'P', tanggalLahir: '07/08/2017', alamat: 'Jl. Dinoyo No. 45, Malang', waliKelas: 'Ibu Nurul Hidayah', totalPoin: 88, status: 'Aktif', noTelp: '082345678901', namaOrangTua: 'Ibu Dewi Rahmadani' },
-  { id: 'siswa-003', nis: '2024003', nama: 'Farhan Ardiansyah', kelas: '5B', jenisKelamin: 'L', tanggalLahir: '22/11/2015', alamat: 'Jl. Soekarno Hatta No. 78, Malang', waliKelas: 'Pak Agus Wahyudi', totalPoin: 52, status: 'Aktif', noTelp: '083456789012', namaOrangTua: 'Bapak Ardi Setiawan' },
-  { id: 'siswa-004', nis: '2024004', nama: 'Zahra Putri Andini', kelas: '6A', jenisKelamin: 'P', tanggalLahir: '05/02/2014', alamat: 'Jl. Veteran No. 23, Malang', waliKelas: 'Ibu Fatimah Zahra', totalPoin: 97, status: 'Aktif', noTelp: '084567890123', namaOrangTua: 'Ibu Sri Andini' },
-  { id: 'siswa-005', nis: '2024005', nama: 'Rizki Maulana Putra', kelas: '3B', jenisKelamin: 'L', tanggalLahir: '14/06/2017', alamat: 'Jl. Gajayana No. 56, Malang', waliKelas: 'Pak Rudi Hartono', totalPoin: 58, status: 'Aktif', noTelp: '085678901234', namaOrangTua: 'Bapak Maulana Hasan' },
-  { id: 'siswa-006', nis: '2024006', nama: 'Siti Aisyah Nurhaliza', kelas: '2B', jenisKelamin: 'P', tanggalLahir: '30/09/2018', alamat: 'Jl. Sulfat No. 11, Malang', waliKelas: 'Ibu Khadijah Nur', totalPoin: 55, status: 'Aktif', noTelp: '086789012345', namaOrangTua: 'Ibu Nurhaliza Sari' },
-  { id: 'siswa-007', nis: '2024007', nama: 'Ilham Ramadhan Saputra', kelas: '4A', jenisKelamin: 'L', tanggalLahir: '18/04/2016', alamat: 'Jl. Tlogomas No. 34, Malang', waliKelas: 'Ibu Sari Dewi', totalPoin: 85, status: 'Aktif', noTelp: '087890123456', namaOrangTua: 'Bapak Ramadhan Putra' },
-  { id: 'siswa-008', nis: '2024008', nama: 'Nisa Fauziah Ramadhani', kelas: '3A', jenisKelamin: 'P', tanggalLahir: '25/12/2017', alamat: 'Jl. Sigura-Gura No. 67, Malang', waliKelas: 'Ibu Nurul Hidayah', totalPoin: 63, status: 'Aktif', noTelp: '088901234567', namaOrangTua: 'Ibu Fauziah Hanum' },
-  { id: 'siswa-009', nis: '2024009', nama: 'Bagas Wicaksono Hadi', kelas: '4A', jenisKelamin: 'L', tanggalLahir: '11/07/2016', alamat: 'Jl. Bendungan Sutami No. 89, Malang', waliKelas: 'Ibu Sari Dewi', totalPoin: 47, status: 'Aktif', noTelp: '089012345678', namaOrangTua: 'Bapak Wicaksono Hadi' },
-  { id: 'siswa-010', nis: '2024010', nama: 'Dinda Rahmawati Sari', kelas: '6B', jenisKelamin: 'P', tanggalLahir: '03/01/2014', alamat: 'Jl. Kawi No. 15, Malang', waliKelas: 'Pak Yusuf Effendi', totalPoin: 61, status: 'Aktif', noTelp: '081123456789', namaOrangTua: 'Ibu Rahmawati Dewi' },
-];
-
 export default function StudentManagementClient() {
-  const [students, setStudents] = useState<Student[]>(mockStudents);
+  const router = useRouter();
+  const [students, setStudents] = useState<Student[]>([]);
+
+  useEffect(() => {
+    const loadStudents = async () => {
+      const data = await getStudentsList();
+      setStudents(data);
+    };
+    loadStudents();
+  }, []);
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [search, setSearch] = useState('');
@@ -47,20 +45,39 @@ export default function StudentManagementClient() {
   const [viewStudent, setViewStudent] = useState<Student | null>(null);
   const [showBulkModal, setShowBulkModal] = useState(false);
 
-  const handleSaveStudent = (data: Student) => {
+  const handleSaveStudent = async (data: Student) => {
     if (editStudent) {
-      setStudents(prev => prev.map(s => s.id === editStudent.id ? { ...data, id: s.id } : s));
+      const updated = students.map(s => s.id === editStudent.id ? { ...data, id: s.id } : s);
+      setStudents(updated);
+      await saveStudentsList(updated);
     } else {
       const newId = `siswa-${String(students.length + 1).padStart(3, '0')}`;
-      setStudents(prev => [{ ...data, id: newId }, ...prev]);
+      const updated = [{ ...data, id: newId }, ...students];
+      setStudents(updated);
+      await saveStudentsList(updated);
     }
     setShowAddModal(false);
     setEditStudent(null);
   };
 
-  const handleDeleteConfirm = () => {
+  const handleImportComplete = async (importedStudents: Omit<Student, 'id' | 'totalPoin' | 'status' | 'waliKelas'>[]) => {
+    const newStudents = importedStudents.map((student, index) => ({
+      ...student,
+      id: `siswa-${String(students.length + index + 1).padStart(3, '0')}`,
+      totalPoin: 50,
+      status: 'Aktif' as const,
+      waliKelas: '-'
+    }));
+    const updated = [...newStudents, ...students];
+    setStudents(updated);
+    await saveStudentsList(updated);
+  };
+
+  const handleDeleteConfirm = async () => {
     if (deleteStudent) {
-      setStudents(prev => prev.filter(s => s.id !== deleteStudent.id));
+      const updated = students.filter(s => s.id !== deleteStudent.id);
+      setStudents(updated);
+      await saveStudentsList(updated);
       setDeleteStudent(null);
     }
   };
@@ -165,7 +182,10 @@ export default function StudentManagementClient() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex gap-2">
+                      <div className="flex gap-1">
+                        <button className="p-1.5 rounded hover:bg-muted" style={{ color: 'var(--success)' }} onClick={() => router.push(`/profil-murid?id=${student.id}`)}>
+                          <User size={14} />
+                        </button>
                         <button className="p-1.5 rounded hover:bg-muted" style={{ color: 'var(--primary)' }} onClick={() => setViewStudent(student)}>
                           <Eye size={14} />
                         </button>
@@ -239,8 +259,8 @@ export default function StudentManagementClient() {
 
       {showBulkModal && (
         <BulkImportModal 
-          isOpen={true}
           onClose={() => setShowBulkModal(false)}
+          onImportComplete={handleImportComplete}
         />
       )}
     </div>

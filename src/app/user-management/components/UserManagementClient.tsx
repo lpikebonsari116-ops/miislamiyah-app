@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { Users, Plus, Search, Upload, Download, Edit2, Trash2, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, X, ShieldCheck, GraduationCap, BookOpen,  } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Users, Plus, Search, Upload, Download, Edit2, Trash2, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, X, ShieldCheck, GraduationCap, BookOpen } from 'lucide-react';
 import { toast } from 'sonner';
 import UserFormModal from './UserFormModal';
 import UserDeleteModal from './UserDeleteModal';
+import { getAllUsers, addCustomUser, updateCustomUser, deleteCustomUser } from '../../auth.lib';
 
 export interface AppUser {
   id: string;
@@ -17,24 +18,13 @@ export interface AppUser {
   terakhirAktif: string;
   createdAt: string;
   noTelp: string;
+  password?: string;
 }
 
-const mockUsers: AppUser[] = [
-  { id: 'user-001', nama: 'Ahmad Fauzi, S.Pd', email: 'ahmad.fauzi@mi-islamiyah.sch.id', role: 'Admin', kelas: '—', jabatan: 'Kepala Sekolah', statusAkun: 'Aktif', terakhirAktif: '12 Mei 2026, 11:20', createdAt: '01/07/2024', noTelp: '081234567890' },
-  { id: 'user-002', nama: 'Ibu Sari Dewi, S.Pd', email: 'sari.dewi@mi-islamiyah.sch.id', role: 'Guru', kelas: '4A', jabatan: 'Wali Kelas 4A', statusAkun: 'Aktif', terakhirAktif: '12 Mei 2026, 10:45', createdAt: '01/07/2024', noTelp: '082345678901' },
-  { id: 'user-003', nama: 'Ibu Nurul Hidayah, S.Pd', email: 'nurul.hidayah@mi-islamiyah.sch.id', role: 'Guru', kelas: '3A', jabatan: 'Wali Kelas 3A', statusAkun: 'Aktif', terakhirAktif: '12 Mei 2026, 09:30', createdAt: '01/07/2024', noTelp: '083456789012' },
-  { id: 'user-004', nama: 'Pak Agus Wahyudi, S.Pd', email: 'agus.wahyudi@mi-islamiyah.sch.id', role: 'Guru', kelas: '5B', jabatan: 'Wali Kelas 5B', statusAkun: 'Aktif', terakhirAktif: '11 Mei 2026, 15:00', createdAt: '01/07/2024', noTelp: '084567890123' },
-  { id: 'user-005', nama: 'Ibu Fatimah Zahra, S.Pd.I', email: 'fatimah.zahra@mi-islamiyah.sch.id', role: 'Guru', kelas: '6A', jabatan: 'Wali Kelas 6A', statusAkun: 'Aktif', terakhirAktif: '12 Mei 2026, 08:15', createdAt: '01/07/2024', noTelp: '085678901234' },
-  { id: 'user-006', nama: 'Pak Rudi Hartono, S.Pd', email: 'rudi.hartono@mi-islamiyah.sch.id', role: 'Guru', kelas: '3B', jabatan: 'Wali Kelas 3B', statusAkun: 'Aktif', terakhirAktif: '10 Mei 2026, 14:20', createdAt: '01/07/2024', noTelp: '086789012345' },
-  { id: 'user-007', nama: 'Ibu Khadijah Nur, S.Pd.I', email: 'khadijah.nur@mi-islamiyah.sch.id', role: 'Guru', kelas: '2B', jabatan: 'Wali Kelas 2B', statusAkun: 'Aktif', terakhirAktif: '12 Mei 2026, 07:55', createdAt: '01/07/2024', noTelp: '087890123456' },
-  { id: 'user-008', nama: 'Pak Yusuf Effendi, S.Pd', email: 'yusuf.effendi@mi-islamiyah.sch.id', role: 'Guru', kelas: '6B', jabatan: 'Wali Kelas 6B', statusAkun: 'Aktif', terakhirAktif: '11 Mei 2026, 16:10', createdAt: '01/07/2024', noTelp: '088901234567' },
-  { id: 'user-009', nama: 'Ibu Laila Mufidah, S.Pd.I', email: 'laila.mufidah@mi-islamiyah.sch.id', role: 'Guru', kelas: '1B', jabatan: 'Wali Kelas 1B', statusAkun: 'Aktif', terakhirAktif: '12 Mei 2026, 10:00', createdAt: '01/07/2024', noTelp: '089012345678' },
-  { id: 'user-010', nama: 'Pak Budi Santoso, S.Pd', email: 'budi.santoso@mi-islamiyah.sch.id', role: 'Guru', kelas: '—', jabatan: 'Guru Mapel PAI', statusAkun: 'Aktif', terakhirAktif: '09 Mei 2026, 12:30', createdAt: '01/07/2024', noTelp: '081123456789' },
-  { id: 'user-011', nama: 'Muhammad Hafidz Al-Farisi', email: 'hafidz.2024001@siswa.mi-islamiyah.sch.id', role: 'Siswa', kelas: '4A', jabatan: 'Siswa Kelas 4A', statusAkun: 'Aktif', terakhirAktif: '10 Mei 2026, 13:45', createdAt: '15/07/2024', noTelp: '—' },
-  { id: 'user-012', nama: 'Aulia Rahmadani Putri', email: 'aulia.2024002@siswa.mi-islamiyah.sch.id', role: 'Siswa', kelas: '3A', jabatan: 'Siswa Kelas 3A', statusAkun: 'Aktif', terakhirAktif: '08 Mei 2026, 09:20', createdAt: '15/07/2024', noTelp: '—' },
-  { id: 'user-013', nama: 'Zahra Putri Andini', email: 'zahra.2024004@siswa.mi-islamiyah.sch.id', role: 'Siswa', kelas: '6A', jabatan: 'Siswa Kelas 6A', statusAkun: 'Aktif', terakhirAktif: '11 Mei 2026, 11:00', createdAt: '15/07/2024', noTelp: '—' },
-  { id: 'user-014', nama: 'Reza Pratama Wijaya', email: 'reza.2023001@siswa.mi-islamiyah.sch.id', role: 'Siswa', kelas: '6A', jabatan: 'Siswa Kelas 6A', statusAkun: 'Nonaktif', terakhirAktif: '01 Mar 2026, 08:00', createdAt: '15/07/2023', noTelp: '—' },
-  { id: 'user-015', nama: 'Ibu Rina Kusuma, S.Pd', email: 'rina.kusuma@mi-islamiyah.sch.id', role: 'Guru', kelas: '5A', jabatan: 'Wali Kelas 5A', statusAkun: 'Aktif', terakhirAktif: '12 Mei 2026, 11:05', createdAt: '01/07/2024', noTelp: '082234567890' },
+const defaultUsers: AppUser[] = [
+  { id: '1', nama: 'Administrator Utama', email: 'admin@mi-islamiyah.sch.id', role: 'Admin', kelas: '—', jabatan: 'Admin', statusAkun: 'Aktif', terakhirAktif: new Date().toLocaleDateString('id-ID'), createdAt: new Date().toLocaleDateString('id-ID'), noTelp: '—', password: 'admin123' },
+  { id: '2', nama: 'Guru Pengajar', email: 'guru@mi-islamiyah.sch.id', role: 'Guru', kelas: '—', jabatan: 'Guru', statusAkun: 'Aktif', terakhirAktif: new Date().toLocaleDateString('id-ID'), createdAt: new Date().toLocaleDateString('id-ID'), noTelp: '—', password: 'guru123' },
+  { id: '3', nama: 'Siswa MI', email: 'murid@mi-islamiyah.sch.id', role: 'Siswa', kelas: '—', jabatan: 'Siswa', statusAkun: 'Aktif', terakhirAktif: new Date().toLocaleDateString('id-ID'), createdAt: new Date().toLocaleDateString('id-ID'), noTelp: '—', password: 'murid123' },
 ];
 
 type RoleTab = 'Semua' | 'Admin' | 'Guru' | 'Siswa';
@@ -44,7 +34,8 @@ type SortDir = 'asc' | 'desc';
 const roleTabs: RoleTab[] = ['Semua', 'Admin', 'Guru', 'Siswa'];
 
 export default function UserManagementClient() {
-  const [users, setUsers] = useState<AppUser[]>(mockUsers);
+  const [users, setUsers] = useState<AppUser[]>(defaultUsers);
+  const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<RoleTab>('Semua');
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('Semua Status');
@@ -57,6 +48,28 @@ export default function UserManagementClient() {
   const [editUser, setEditUser] = useState<AppUser | null>(null);
   const [deleteUser, setDeleteUser] = useState<AppUser | null>(null);
   const [showImportModal, setShowImportModal] = useState(false);
+
+  const loadUsers = () => {
+    const allAuthUsers = getAllUsers();
+    const mappedUsers: AppUser[] = allAuthUsers.map(user => ({
+      id: user.id,
+      nama: user.name,
+      email: user.email || `${user.username}@mi-islamiyah.sch.id`,
+      role: (user.role === 'admin' ? 'Admin' : user.role === 'guru' ? 'Guru' : 'Siswa') as 'Admin' | 'Guru' | 'Siswa',
+      kelas: '—',
+      jabatan: user.role === 'admin' ? 'Admin' : user.role === 'guru' ? 'Guru' : 'Siswa',
+      statusAkun: 'Aktif',
+      terakhirAktif: new Date().toLocaleDateString('id-ID'),
+      createdAt: new Date().toLocaleDateString('id-ID'),
+      noTelp: '—',
+      password: (user as any).password
+    }));
+    setUsers(mappedUsers);
+  };
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
 
   const roleCounts = useMemo(() => ({
     Semua: users.length,
@@ -104,30 +117,49 @@ export default function UserManagementClient() {
     setSelectedIds(next);
   };
 
-  const handleSaveUser = (data: AppUser) => {
+  const handleSaveUser = (data: AppUser, password?: string) => {
+    const dbRole = data.role === 'Admin' ? 'admin' : data.role === 'Guru' ? 'guru' : 'murid';
+    const username = data.email.split('@')[0];
+    
     if (editUser) {
-      setUsers(prev => prev.map(u => u.id === data.id ? data : u));
+      updateCustomUser(data.id, {
+        name: data.nama,
+        email: data.email,
+        role: dbRole,
+        ...(password && { password })
+      });
       toast.success(`Akun ${data.nama} berhasil diperbarui`);
     } else {
-      setUsers(prev => [...prev, { ...data, id: `user-${Date.now()}` }]);
+      addCustomUser({
+        id: `user-${Date.now()}`,
+        username,
+        password: password || 'password123',
+        name: data.nama,
+        email: data.email,
+        role: dbRole
+      });
       toast.success(`Akun ${data.nama} berhasil dibuat`);
     }
+    
+    loadUsers();
     setShowAddModal(false);
     setEditUser(null);
   };
 
   const handleDeleteConfirm = () => {
     if (deleteUser) {
-      setUsers(prev => prev.filter(u => u.id !== deleteUser.id));
+      deleteCustomUser(deleteUser.id);
       toast.success(`Akun ${deleteUser.nama} berhasil dihapus`);
+      loadUsers();
       setDeleteUser(null);
     }
   };
 
   const handleBulkDelete = () => {
-    setUsers(prev => prev.filter(u => !selectedIds.has(u.id)));
+    selectedIds.forEach(id => deleteCustomUser(id));
     toast.success(`${selectedIds.size} akun berhasil dihapus`);
     setSelectedIds(new Set());
+    loadUsers();
   };
 
   const SortIcon = ({ field }: { field: SortField }) => {
@@ -585,6 +617,4 @@ function UserBulkImportModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-// Need to import Loader2 for UserBulkImportModal
-import { Loader2 } from 'lucide-react'
-;
+import { Loader2 } from 'lucide-react';

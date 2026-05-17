@@ -42,11 +42,10 @@ export default function UserFormModal({ user, onClose, onSave }: Props) {
     else reset({ role: 'Guru', statusAkun: 'Aktif', kelas: '—' });
   }, [user, reset]);
 
-  const onSubmit = async (data: FormData) => {
-    await new Promise(r => setTimeout(r, 600));
+  const onSubmit = (data: FormData) => {
     // TODO: Backend integration — POST/PUT /api/users
     const { password, confirmPassword, ...userData } = data;
-    onSave(userData as AppUser);
+    onSave(userData as AppUser, password);
   };
 
   return (

@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { CalendarDays, Plus, Edit2, Trash2, X, Save, Clock } from 'lucide-react';
+import { getMapelList } from '@/utils/mapel';
 
 interface JadwalItem {
   id: string;
@@ -17,11 +18,6 @@ interface JadwalItem {
 
 const HARI = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'];
 const KELAS_OPTIONS = ['1A', '1B', '2A', '2B', '3A', '3B', '4A', '4B', '5A', '5B', '6A', '6B'];
-const MAPEL_OPTIONS = [
-  'Al-Quran Hadits', 'Aqidah Akhlak', 'Fiqih', 'SKI', 'Bahasa Arab',
-  'Pendidikan Agama Islam', 'Matematika', 'Bahasa Indonesia', 'IPA', 'IPS',
-  'PPKN', 'Bahasa Inggris', 'Penjaskes', 'SBdP', 'Tahfidz', 'Muatan Lokal',
-];
 const GURU_OPTIONS = [
   'Ibu Sari Dewi, S.Pd', 'Ibu Nurul Hidayah, S.Pd', 'Pak Agus Wahyudi, S.Pd',
   'Ibu Fatimah Zahra, S.Pd', 'Pak Rudi Hartono, S.Pd', 'Pak Yusuf Effendi, S.Pd',
@@ -82,6 +78,11 @@ export default function JadwalPelajaranPage() {
   const [editItem, setEditItem] = useState<JadwalItem | null>(null);
   const [deleteItem, setDeleteItem] = useState<JadwalItem | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
+  const [mapelOptions, setMapelOptions] = useState<string[]>([]);
+
+  useEffect(() => {
+    setMapelOptions(getMapelList());
+  }, []);
 
   const jadwalKelas = jadwalList.filter(j => j.kelas === selectedKelas);
 
@@ -231,7 +232,7 @@ export default function JadwalPelajaranPage() {
                   <select value={form.mataPelajaran} onChange={e => setForm(f => ({ ...f, mataPelajaran: e.target.value }))} required
                     className="w-full px-3 py-2 rounded-lg border text-sm" style={{ borderColor: 'var(--border)' }}>
                     <option value="">-- Pilih Mata Pelajaran --</option>
-                    {MAPEL_OPTIONS.map(m => <option key={m} value={m}>{m}</option>)}
+                    {mapelOptions.map(m => <option key={m} value={m}>{m}</option>)}
                   </select>
                 </div>
                 <div>
