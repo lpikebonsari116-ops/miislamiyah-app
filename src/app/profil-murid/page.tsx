@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import { User, Calendar, TrendingUp, Star, BookOpen, Clock, AlertCircle, CheckCircle, XCircle, ChevronLeft } from 'lucide-react';
@@ -18,7 +18,7 @@ import {
   AktivitasKelas
 } from '@/utils/muridProfile';
 
-export default function ProfilMuridPage() {
+function ProfilMuridContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
@@ -35,7 +35,6 @@ export default function ProfilMuridPage() {
     const students = getStudentsList();
     let targetId = siswaIdParam;
     
-    // Jika tidak ada id param dan role adalah murid, cari berdasarkan nama
     if (!targetId && user?.role === 'murid') {
       const found = students.find(s => 
         s.nama.toLowerCase().includes(user.username.toLowerCase()) || 
@@ -200,7 +199,7 @@ export default function ProfilMuridPage() {
               </p>
             ) : (
               <div className="space-y-3">
-                {trenPoinMingguan.map((poin, index) => (
+                {trenPoinMingguan.map((poin) => (
                   <div key={poin.id} className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: 'var(--muted)' }}>
                     <div className="flex items-center gap-3">
                       <p className="text-xs font-mono" style={{ color: 'var(--muted-foreground)' }}>{poin.tanggal}</p>
@@ -283,5 +282,13 @@ export default function ProfilMuridPage() {
         </div>
       </div>
     </AppLayout>
+  );
+}
+
+export default function ProfilMuridPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center">Loading...</div>}>
+      <ProfilMuridContent />
+    </Suspense>
   );
 }
