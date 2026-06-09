@@ -41,28 +41,16 @@ const navSections: NavSection[] = [
     ],
   },
   {
-    section: 'Data Sekolah',
-    items: [
-      { href: '/student-management', label: 'Data Siswa', icon: <GraduationCap size={18} />, roles: ['admin', 'guru'] },
-      { href: '/user-management', label: 'Pengguna', icon: <Users size={18} />, roles: ['admin'] },
-      { href: '/kelas', label: 'Manajemen Kelas', icon: <School size={18} />, roles: ['admin', 'guru'] },
-      { href: '/jadwal', label: 'Jadwal Pelajaran', icon: <CalendarDays size={18} />, roles: ['admin', 'guru', 'murid'] },
-    ],
-  },
-  {
-    section: 'Poin & Perilaku',
-    items: [
-      { href: '/poin-perilaku', label: 'Input Poin', icon: <Star size={18} />, badge: 3, roles: ['admin', 'guru'] },
-      { href: '/life-skills', label: 'Life Skills Harian', icon: <BookOpen size={18} />, roles: ['admin', 'guru', 'murid'] },
-      { href: '/absensi', label: 'Absensi', icon: <ClipboardList size={18} />, roles: ['admin', 'guru'] },
-    ],
-  },
-  {
-    section: 'Laporan',
-    items: [
-      { href: '/laporan', label: 'Laporan & Rekap', icon: <BarChart3 size={18} />, roles: ['admin', 'guru'] },
-    ],
-  },
+  section: 'Data Sekolah',
+  items: [
+    { href: '/student-management', label: 'Data Siswa', icon: <GraduationCap size={18} />, roles: ['admin', 'guru'] },
+    { href: '/user-management', label: 'Pengguna', icon: <Users size={18} />, roles: ['admin'] },
+    { href: '/kelas', label: 'Manajemen Kelas', icon: <School size={18} />, roles: ['admin', 'guru'] },
+    { href: '/jadwal', label: 'Jadwal Pelajaran', icon: <CalendarDays size={18} />, roles: ['admin', 'guru', 'murid'] },
+    { href: '/penilaian', label: 'Penilaian', icon: <BarChart3 size={18} />, roles: ['admin', 'guru'] },
+    { href: '/mata-pelajaran', label: 'Mata Pelajaran', icon: <BookOpen size={18} />, roles: ['admin', 'guru'] },
+  ],
+},
 ];
 
 interface SidebarProps {
